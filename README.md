@@ -1,5 +1,14 @@
 # ReelDeal
 
+## Umi data model
+
+The [Umi data model](docs/umi-data-model.md) introduces the relief fund's shared
+types from atoms through molecules to observations, trigger evaluations, and a
+proposed API/smart-contract payout boundary. Its schemas live in
+`packages/domain/src/umi`; payout execution is still to be implemented.
+
+## Marketplace demo
+
 ReelDeal is an ETHGlobal Tokyo 2026 fish-market **demo**. A browser records a
 landing, a typed decision is stored with its inputs, the API sends incomplete
 or uncertain lots to review, and approved lots can be listed. The model is
