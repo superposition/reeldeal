@@ -2,11 +2,13 @@
   "name": "@reeldeal/api",
   "private": true,
   "type": "module",
+  "dependencies": {
+    "@reeldeal/decision": "workspace:*",
+    "@reeldeal/domain": "workspace:*",
+    "zod": "^4.6.5"
+  },
   "scripts": {
     "dev": "bun --watch src/index.ts",
     "start": "bun src/index.ts"
-  },
-  "dependencies": {
-    "zod": "^4.6.5"
   }
 }

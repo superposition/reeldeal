@@ -12,6 +12,8 @@
     "apps/api": {
       "name": "@reeldeal/api",
       "dependencies": {
+        "@reeldeal/decision": "workspace:*",
+        "@reeldeal/domain": "workspace:*",
         "zod": "^4.6.5",
       },
     },
