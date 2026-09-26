@@ -1,0 +1,19 @@
+{
+  "name": "reeldeal",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "workspaces": ["apps/*", "packages/*"],
+  "scripts": {
+    "dev": "bun run --cwd apps/web dev",
+    "build:web": "bun run --cwd apps/web build",
+    "test": "bun test --pass-with-no-tests",
+    "smoke": "bash scripts/smoke.sh",
+    "chain": "forge build --root contracts",
+    "deploy": "gh workflow run pages.yml --ref main"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3",
+    "@types/bun": "^1.3.14"
+  }
+}

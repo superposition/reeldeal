@@ -1,0 +1,27 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import LotCard from '../../components/LotCard.astro';
+import { previewLots } from '../../data/preview-lots';
+---
+
+<BaseLayout
+  title="Shop"
+  description="Browse preview fish lots in the ReelDeal demo marketplace."
+  section="shop"
+>
+  <section class="page-heading shell">
+    <p class="eyebrow">Kesennuma · shop</p>
+    <h1>Market lots</h1>
+    <p class="intro">
+      This is the static preview board. Live listings, bids, and provenance links
+      will appear here as the workflow is connected.
+    </p>
+    <p class="notice">Preview prices are demo-denominated. These are not offers to sell real fish.</p>
+  </section>
+
+  <section class="section shell" aria-label="Preview lots">
+    <div class="lot-grid">
+      {previewLots.map((lot) => <LotCard lot={lot} />)}
+    </div>
+  </section>
+</BaseLayout>

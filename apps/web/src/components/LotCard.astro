@@ -1,0 +1,19 @@
+---
+import type { PreviewLot } from '../data/preview-lots';
+
+const { lot } = Astro.props as { lot: PreviewLot };
+---
+
+<article class="lot-card" aria-labelledby={`lot-${lot.id}`}>
+  <div class="lot-card__top">
+    <span class="lot-card__id">{lot.id}</span>
+    <span class="lot-card__status">{lot.status}</span>
+  </div>
+  <h3 id={`lot-${lot.id}`}>{lot.species}</h3>
+  <p class="lot-card__meta">{lot.lengthMm} mm · {lot.weightG} g</p>
+  <p class="lot-card__note">{lot.note}</p>
+  <div class="lot-card__bottom">
+    <span>Guide price</span>
+    <span>¥{lot.priceJpy.toLocaleString('ja-JP')}</span>
+  </div>
+</article>
