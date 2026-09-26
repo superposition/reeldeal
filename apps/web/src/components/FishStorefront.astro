@@ -34,8 +34,7 @@ const price = (amount: number) => new Intl.NumberFormat(locale === 'ja' ? 'ja-JP
       <>
         <section class="fish-hero" aria-labelledby="market-title">
           <div class="fish-hero__image">
-            <Image src={dockside} alt={locale === 'ja' ? '港のそばで氷に並べた魚。AI生成イメージ' : 'Whole fish on ice beside a fishing harbor. AI-generated illustration'} widths={[480, 800, 1280]} sizes="(max-width: 480px) 100vw, 370px" format="webp" loading="eager" fetchpriority="high" />
-            <span>{locale === 'ja' ? 'AI生成イメージ' : 'AI illustration'}</span>
+            <Image src={dockside} alt={locale === 'ja' ? '港のそばで氷に並べた魚' : 'Whole fish on ice beside a fishing harbor'} widths={[480, 800, 1280]} sizes="(max-width: 480px) 100vw, 370px" format="webp" loading="eager" fetchpriority="high" />
           </div>
           <div class="fish-hero__copy">
             <span>ReelDeal / {t.region}</span>
@@ -75,7 +74,7 @@ const price = (amount: number) => new Intl.NumberFormat(locale === 'ja' ? 'ja-JP
         {storefrontLots.map((item) => (
           <article class={`fish-card fish-card--${item.tone}`} data-fish-card data-category={item.category} data-search={`${item.name} ${item.ja} ${item.english}`} id={item.slug}>
             <div class="fish-card__main">
-              <div class="fish-card__image"><Image src={item.image} alt={locale === 'ja' ? `${item.ja}。AI生成イメージ` : `${item.english}. AI-generated illustration`} widths={[320, 640, 960]} sizes="(max-width: 480px) 100vw, 350px" loading="lazy" /></div>
+              <div class="fish-card__image"><Image src={item.image} alt={locale === 'ja' ? item.ja : item.english} widths={[320, 640, 960]} sizes="(max-width: 480px) 100vw, 350px" loading="lazy" /></div>
               <div class="fish-card__copy">
                 <span class="fish-card__eyebrow" lang={locale === 'ja' ? 'en' : 'ja'}>{locale === 'ja' ? item.name : item.ja}</span>
                 <h3>{locale === 'ja' ? item.ja : item.name}</h3>
@@ -94,9 +93,6 @@ const price = (amount: number) => new Intl.NumberFormat(locale === 'ja' ? 'ja-JP
       </div>
       <p class="market-empty" data-empty hidden>{t.empty}</p>
     </section>
-    <details class="fish-credits" id="image-credits">
-      <summary>{t.credits}</summary><p>{t.creditNote}</p>
-    </details>
   </div>
 </BaseLayout>
 

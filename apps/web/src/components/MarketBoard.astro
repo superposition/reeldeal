@@ -41,7 +41,6 @@ const names = Object.fromEntries(fish.map((item) => [item.slug, locale === 'ja' 
         {fish.map((item) => <a class="market-chip" data-filter-kind="category" data-filter-value={item.slug} href={`?category=${item.slug}`}>{locale === 'ja' ? item.ja : item.name}</a>)}
       </div>
     </nav>
-    <a class="market-credits-link" href={`${base}${locale === 'ja' ? 'ja/' : ''}#image-credits`}>{t.credits}</a>
   </div>
 <script>
   import '../lib/market-board';
@@ -51,5 +50,4 @@ const names = Object.fromEntries(fish.map((item) => [item.slug, locale === 'ja' 
   .market-language a { display: grid; place-items: center; min-height: 44px; min-width: 44px; font-size: .75rem; font-weight: 800; }
   .market-language a[aria-current="page"] { text-decoration-thickness: 3px; }
   .market-language span { font-size: .65rem; margin-left: auto; }
-  .market-credits-link { display: inline-flex; align-items: center; min-height: 44px; font-size: .75rem; }
 </style>

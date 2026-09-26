@@ -4,4 +4,4 @@ The six `*-ice.webp` assets are AI-generated illustrations of katsuo, sanma, sab
 
 `dockside-catch.webp` is an AI-generated editorial-style hero showing fish on ice beside a harbor. It does not depict a named harbor, actual landing or supplier.
 
-These are presentation assets, not lot photographs, landing evidence, classifier inputs or validated species references. Submitted landing photos take precedence in live listings and lot details. Illustration labels remain visible in English and Japanese.
+These are presentation assets, not lot photographs, landing evidence, classifier inputs or validated species references. Submitted landing photos take precedence in live listings and lot details. Asset provenance is documented here. The storefront keeps sample inventory distinct from live listings; lot evidence distinguishes submitted photographs from species reference images.

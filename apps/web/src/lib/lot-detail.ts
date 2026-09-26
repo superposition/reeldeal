@@ -38,11 +38,10 @@ if (root) {
     photo.closest('picture')?.querySelectorAll('source').forEach((source) => source.remove());
     photo.removeAttribute('srcset');
     photo.src = src;
-    photo.alt = 'AI-generated species illustration, not a landing photograph';
+    photo.alt = 'Species reference image';
     photo.closest<HTMLElement>('.market-detail__media')!.dataset.reference = 'true';
-    set('[data-photo-caption]', 'AI-generated illustration, not a photograph of this lot.');
     const caption = root?.querySelector<HTMLElement>('[data-photo-caption]');
-    if (caption) caption.hidden = false;
+    if (caption) caption.hidden = true;
   }
   const showUnavailable = (text: string) => {
     if (bidding) bidding.hidden = true;
@@ -69,7 +68,7 @@ if (root) {
     set('[data-signal-status]', 'Preview only');
     set('[data-signal-species]', 'Sample label');
     set('[data-signal-review]', 'No review record');
-    set('[data-signal-photo]', 'Illustration');
+    set('[data-signal-photo]', 'Reference image');
     if (evidenceAction) {
       evidenceAction.href = new URL('../', location.href).pathname;
       evidenceAction.textContent = 'Back to lots';
@@ -117,7 +116,7 @@ if (root) {
     set('[data-signal-review]', corrections.length > 0
       ? `${corrections.length} human correction${corrections.length === 1 ? '' : 's'}`
       : lot.status === 'pending_review' ? 'Review needed' : 'No corrections');
-    set('[data-signal-photo]', hasPhoto ? 'Landing photo' : 'Illustration');
+    set('[data-signal-photo]', hasPhoto ? 'Landing photo' : 'Reference image');
     const answer = decision.kind === 'choice' ? decision.choice ?? 'No answer'
       : decision.kind === 'score' ? `${Math.round((decision.score ?? 0) * 100)}% recorded score`
       : decision.noul_value ? 'Yes' : 'No';

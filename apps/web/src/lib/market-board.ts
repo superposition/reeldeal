@@ -76,7 +76,6 @@ if (market) {
       month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit',
     })}`);
     factsCopy.append(title, facts, landed);
-    if (!listing.image_ref) factsCopy.append(element('small', undefined, t.sample));
     copy.append(badge, factsCopy);
     const foot = element('div', 'market-card__foot');
     foot.append(element('strong', undefined, `¥${listing.price_jpy.toLocaleString('ja-JP')}`));
