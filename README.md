@@ -92,9 +92,9 @@ flowchart LR
     I --> J
 
     J --> K[Marketplace listing]
-    K --> L[Buyer signs EIP-712 bid]
-    L --> M[Seller accepts one winner]
-    M --> N[Demo sale]
+    K -. planned .-> L[Buyer signs EIP-712 bid]
+    L -. planned .-> M[Seller accepts one winner]
+    M -. planned .-> N[Demo sale]
 
     C -. audit trail .-> O[(Bun API + SQLite)]
     G -. model metadata .-> O
@@ -136,7 +136,8 @@ grade or species classifier.
 ## Remaining demo gates and attribution
 
 A real camera capture and cross-session scan-to-listing demonstration still
-need runtime proof. Chain anchoring needs a funded signer, RPC, verified
+need runtime proof. Signed bids, seller acceptance, and demo settlement remain
+pending routes; the diagram marks that planned path. Chain anchoring needs a funded signer, RPC, verified
 receipt, contract addresses, and explorer links; the local Forge simulation
 is not an on-chain transaction. The final video and submission are pending.
 The shared demo API has no seller authentication on ordinary write routes;
