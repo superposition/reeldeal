@@ -160,13 +160,21 @@ export function getLot(database: Database, lotId: string): Response {
   const decision = database.query('SELECT * FROM decisions WHERE id = ?').get(row.decision_id) as DecisionRow;
   const corrections = database.query('SELECT * FROM corrections WHERE lot_id = ? ORDER BY created_at,rowid')
     .all(row.id) as Array<Record<string, unknown>>;
-  const events = database.query(`SELECT entity_type,entity_id,actor_kind,actor_id,from_status,to_status,payload_json,at
+  const events = database.query(`SELECT id,entity_type,entity_id,org_id,actor_kind,actor_id,from_status,to_status,request_id,payload_json,at
     FROM audit_log WHERE (entity_type = 'Lot' AND entity_id = ?)
       OR (entity_type = 'FishScan' AND entity_id = ?)
       OR (entity_type = 'Observation' AND entity_id = ?)
       OR (entity_type = 'TypedDecision' AND entity_id = ?)
       OR (entity_type = 'Correction' AND entity_id IN (SELECT id FROM corrections WHERE lot_id = ?))
-    ORDER BY at,rowid`).all(row.id, row.scan_id, observation.id, row.decision_id, row.id) as Array<Record<string, unknown>>;
+      OR (entity_type = 'Listing' AND entity_id = ?)
+      OR (entity_type = 'Bid' AND entity_id IN (SELECT id FROM bids WHERE listing_id = ?))
+      OR (entity_type = 'Sale' AND entity_id IN (SELECT id FROM sales WHERE listing_id = ?))
+      OR (entity_type = 'Payment' AND entity_id IN (
+        SELECT p.id FROM payments p JOIN sales s ON s.id = p.sale_id WHERE s.listing_id = ?))
+    ORDER BY at,rowid`).all(
+      row.id, row.scan_id, observation.id, row.decision_id, row.id,
+      listing?.id ?? null, listing?.id ?? null, listing?.id ?? null, listing?.id ?? null,
+    ) as Array<Record<string, unknown>>;
   const original = observationValue(observation);
   const effective = effectiveObservation(original, corrections.map((item) => ({
     field: String(item.field), human_value: String(item.human_value), actor_id: String(item.actor_id),
