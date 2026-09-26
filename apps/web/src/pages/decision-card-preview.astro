@@ -1,0 +1,32 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import DecisionCard from '../components/DecisionCard.astro';
+import { decisionCardFixtures } from '../data/decision-card-fixtures';
+---
+
+<BaseLayout
+  title="Decision card preview"
+  description="Three static typed-decision examples for the ReelDeal demo interface."
+>
+  <header class="page-heading shell">
+    <p class="eyebrow">UI fixture · static data</p>
+    <h1>Decision cards</h1>
+    <p class="intro">These examples show how an answer, its confidence, and the independent review result appear together. They are static fixtures, not live model runs.</p>
+  </header>
+  <section class="section shell" aria-label="Decision card examples">
+    <div class="fixture-grid">
+      {decisionCardFixtures.map((fixture) => (
+        <div class="fixture">
+          <p class="fixture__label">{fixture.label}</p>
+          <DecisionCard decision={fixture.decision} outcome={fixture.outcome} />
+        </div>
+      ))}
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .fixture-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: var(--space-5); }
+  .fixture { min-width: 0; }
+  .fixture__label { margin: 0 0 var(--space-2); color: var(--color-ink-soft); font-size: .875rem; font-weight: 800; }
+</style>
