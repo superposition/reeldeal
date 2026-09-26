@@ -1,3 +1,5 @@
+import { marketCopy } from '../data/market-copy';
+
 type Listing = {
   id: string; lot_id: string; status: string; species_label: string | null;
   weight_g: number | null; length_mm: number | null; price_jpy: number;
@@ -6,6 +8,10 @@ type Listing = {
 
 const market = document.querySelector<HTMLElement>('[data-market]');
 if (market) {
+  const locale = market.dataset.locale === 'ja' ? 'ja' : 'en';
+  const t = marketCopy[locale];
+  const images = JSON.parse(market.dataset.fishImages ?? '{}') as Record<string, string>;
+  const names = JSON.parse(market.dataset.fishNames ?? '{}') as Record<string, string>;
   const status = market.querySelector<HTMLElement>('[data-market-status]');
   const count = document.querySelector<HTMLElement>('[data-live-count]');
   const live = market.querySelector<HTMLElement>('[data-live-grid]');
@@ -22,11 +28,15 @@ if (market) {
     const kind = chip.dataset.filterKind!;
     const value = chip.dataset.filterValue!;
     const link = new URL(location.href);
-    if (value === 'all') link.searchParams.delete(kind);
+    if (value === 'all' && kind === 'category') link.searchParams.delete(kind);
     else link.searchParams.set(kind, value);
     chip.href = `${link.pathname}${link.search}`;
     chip.setAttribute('aria-current', (kind === 'status' ? selectedStatus : selectedCategory) === value ? 'true' : 'false');
   }
+  for (const link of document.querySelectorAll<HTMLAnchorElement>('.market-language a')) link.search = location.search;
+  const previews = preview?.querySelectorAll<HTMLElement>('[data-species]') ?? [];
+  for (const card of previews) card.hidden = selectedCategory !== 'all' && card.dataset.species !== selectedCategory;
+  if (empty) empty.hidden = [...previews].some((card) => !card.hidden);
 
   function element<K extends keyof HTMLElementTagNameMap>(tag: K, className?: string, value?: string): HTMLElementTagNameMap[K] {
     const node = document.createElement(tag);
@@ -41,32 +51,35 @@ if (market) {
     const article = element('article', `market-card market-card--${tone}`);
     const imageWrap = element('div', 'market-card__media');
     const image = element('img');
-    image.src = listing.image_ref ?? art;
-    image.alt = listing.image_ref ? `Landing photograph for ${listing.species_label ?? 'this lot'}` : 'Illustrated fish silhouette; no landing photograph';
+    const species = (listing.species_label ?? '').toLowerCase();
+    image.src = listing.image_ref ?? images[species] ?? art;
+    image.alt = listing.image_ref ? t.photoAlt : t.referenceAlt;
+    if (!listing.image_ref) article.classList.add('market-card--reference');
     image.width = 480;
     image.height = 360;
     image.loading = first ? 'eager' : 'lazy';
     imageWrap.append(image);
     const copy = element('div', 'market-card__image-copy');
-    const availability = ({ open: 'Open', accepted: 'Reserved', settled: 'Sold', cancelled: 'Cancelled' } as Record<string, string>)[listing.status]
+    const availability = ({ open: t.open, accepted: t.accepted, settled: t.settled, cancelled: t.cancelled } as Record<string, string>)[listing.status]
       ?? listing.status;
     const badge = element('span', `rd-ui-badge rd-ui-badge--${listing.status === 'settled' ? 'pink' : 'lime'} market-card__status`);
-    badge.append(element('span', 'rd-ui-badge__dot'), element('strong', undefined, listing.demo ? `${availability} demo` : availability));
+    badge.append(element('span', 'rd-ui-badge__dot'), element('strong', undefined, listing.demo ? `${availability} ${t.demo}` : availability));
     const factsCopy = element('div', 'market-card__image-facts');
-    const title = element('h2', undefined, listing.species_label ?? 'Fish lot');
-    const weight = listing.weight_g === null ? 'Weight unknown' : `${listing.weight_g.toLocaleString('ja-JP')} g`;
-    const length = listing.length_mm === null ? 'Length unknown' : `${listing.length_mm} mm`;
+    const title = element('h2', undefined, names[species] ?? listing.species_label ?? t.unknown);
+    const weight = listing.weight_g === null ? t.weightUnknown : `${listing.weight_g.toLocaleString('ja-JP')} g`;
+    const length = listing.length_mm === null ? t.lengthUnknown : `${listing.length_mm} mm`;
     const facts = element('p');
     facts.append(element('span', undefined, weight), element('span', 'market-card__fact-divider', ' · '), element('span', undefined, length));
-    const landed = element('small', undefined, `Landed ${new Date(listing.captured_at).toLocaleString('ja-JP', {
+    const landed = element('small', undefined, `${t.landed} ${new Date(listing.captured_at).toLocaleString(locale === 'ja' ? 'ja-JP' : 'en-GB', {
       month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit',
     })}`);
     factsCopy.append(title, facts, landed);
+    if (!listing.image_ref) factsCopy.append(element('small', undefined, t.sample));
     copy.append(badge, factsCopy);
     imageWrap.append(copy);
     const foot = element('div', 'market-card__foot');
     foot.append(element('strong', undefined, `¥${listing.price_jpy.toLocaleString('ja-JP')}`));
-    const link = element('a', 'rd-ui-button rd-ui-button--ink rd-ui-button--secondary market-card__action', 'View');
+    const link = element('a', 'rd-ui-button rd-ui-button--ink rd-ui-button--secondary market-card__action', t.view);
     link.href = `${base}shop/lot/?id=${encodeURIComponent(listing.lot_id)}`;
     foot.append(link);
     article.append(imageWrap, foot);
@@ -74,15 +87,15 @@ if (market) {
   }
 
   if (!api) {
-    if (status) status.textContent = 'Preview only. Connect the public market API to see current stock.';
+    if (status) status.textContent = t.preview;
   } else {
-    if (status) status.textContent = 'Checking the market…';
+    if (status) status.textContent = t.loading;
     const endpoint = new URL(`${api}/v1/listings`);
     if (selectedStatus !== 'all') endpoint.searchParams.set('status', selectedStatus);
     if (selectedCategory !== 'all') endpoint.searchParams.set('category', selectedCategory);
     void fetch(endpoint, { signal: AbortSignal.timeout(12_000) })
       .then(async (response) => {
-        if (!response.ok) throw new Error(`Market unavailable (${response.status}).`);
+        if (!response.ok) throw new Error(`${t.unavailable} (${response.status})`);
         return response.json() as Promise<{ listings: Listing[]; open_count: number }>;
       })
       .then(({ listings, open_count }) => {
@@ -93,13 +106,13 @@ if (market) {
         live.hidden = listings.length === 0;
         empty.hidden = listings.length !== 0;
         preview.hidden = true;
-        if (count) count.textContent = `${open_count} open lot${open_count === 1 ? '' : 's'}`;
+        if (count) count.textContent = `${open_count} ${t.openCount}`;
         if (status) status.textContent = '';
       })
       .catch((error) => {
         if (status) {
           status.dataset.error = 'true';
-          status.textContent = `${error instanceof Error ? error.message : 'Market unavailable.'} Showing previews, not live stock.`;
+          status.textContent = `${error instanceof Error ? error.message : t.unavailable} ${t.fallback}`;
         }
       });
   }

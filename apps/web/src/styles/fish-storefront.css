@@ -14,8 +14,8 @@
 .fish-hero .rd-ui-button { color: var(--color-ink); }
 .fish-categories { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-block: 12px 24px; }
 .fish-categories .rd-ui-action-tile { min-height: 128px; }
-.fish-categories .rd-ui-action-tile__icon { width: 80px; height: 60px; }
-.fish-categories img { width: 80px; height: 60px; object-fit: contain; mix-blend-mode: multiply; }
+.fish-categories .rd-ui-action-tile__icon { width: 68px; height: 68px; overflow: hidden; }
+.fish-categories img { width: 64px; height: 64px; object-fit: contain; }
 .fish-shop-heading { padding: 20px; margin-bottom: 20px; border: 3px solid var(--color-ink); border-radius: 8px; background: var(--color-water); box-shadow: 5px 5px 0 rgb(21 17 15 / .13); }
 .fish-shop-heading h1 { margin-block: 12px; }
 .fish-shop-heading p { margin: 0; font-size: .8rem; font-weight: 800; }

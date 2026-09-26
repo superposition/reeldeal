@@ -239,3 +239,5 @@ html:has(.market-detail) { background: var(--color-review); }
 .market-detail__audit li { display: grid; gap: var(--space-1); padding-left: var(--space-3); border-left: 2px solid var(--color-board); }
 .market-detail__audit span { color: var(--color-ink-soft); font-size: .875rem; overflow-wrap: anywhere; }
 .market-detail__lot-id { margin: 0; padding: 0 var(--space-4) var(--space-3); color: var(--color-ink-soft); font-size: .7rem; overflow-wrap: anywhere; }
+.market-card--reference .market-card__media img { object-fit: contain; background: #edf5f7; }
+.market-card[hidden] { display: none; }

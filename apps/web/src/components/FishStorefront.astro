@@ -42,9 +42,9 @@ const price = (amount: number) => new Intl.NumberFormat(locale === 'ja' ? 'ja-JP
           </div>
         </section>
         <nav class="fish-categories" aria-label={t.browse}>
-          {categories.map((category) => (
-            <ActionTile href={`${shopUrl}?category=${category.id}`} label={category.label} tone={category.tone}>
-              <Image slot="icon" src={category.image} alt="" width={80} height={60} loading="lazy" />
+          {fish.slice(0, 4).map((item) => (
+            <ActionTile href={`${shopUrl}?category=${item.slug}`} label={locale === 'ja' ? item.ja : item.name} tone={item.tone}>
+              <Image slot="icon" src={item.image} alt="" width={80} loading="lazy" />
             </ActionTile>
           ))}
         </nav>
@@ -91,11 +91,10 @@ const price = (amount: number) => new Intl.NumberFormat(locale === 'ja' ? 'ja-JP
       </div>
       <p class="market-empty" data-empty hidden>{t.empty}</p>
     </section>
-    <details class="fish-credits">
+    <details class="fish-credits" id="image-credits">
       <summary>{t.credits}</summary><p>{t.creditNote}</p>
       <ul>
         <li><a href="https://commons.wikimedia.org/wiki/File:Katsuo_no_Mizuage_20100530.jpg">{t.landingCredit}</a> — omaezakicity, <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a></li>
-        {fish.map((item) => <li><a href={`https://commons.wikimedia.org/wiki/${item.source}`}>{locale === 'ja' ? item.ja : item.english}</a> — {item.author}, <a href={item.licenseUrl}>{item.license}</a></li>)}
       </ul>
     </details>
   </div>

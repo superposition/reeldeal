@@ -28,10 +28,24 @@ if (root) {
     if (node) node.textContent = value;
   };
   const photo = root.querySelector<HTMLImageElement>('[data-lot-image] img, img[data-lot-image]');
+  const images = JSON.parse(root.dataset.fishImages ?? '{}') as Record<string, string>;
+  function showReference(species: string | null) {
+    const src = images[(species ?? '').toLowerCase()];
+    if (!src || !photo) return;
+    photo.closest('picture')?.querySelectorAll('source').forEach((source) => source.remove());
+    photo.removeAttribute('srcset');
+    photo.src = src;
+    photo.alt = 'AI-generated species illustration, not a landing photograph';
+    photo.style.objectFit = 'contain';
+    set('[data-photo-caption]', 'AI-generated illustration, not a photograph of this lot.');
+    const caption = root?.querySelector<HTMLElement>('[data-photo-caption]');
+    if (caption) caption.hidden = false;
+  }
 
   function showPreview(lotId: string): boolean {
     const preview = previewLots.find((lot) => lot.id === lotId);
     if (!preview) return false;
+    showReference(preview.species);
     set('[data-lot-title]', preview.species);
     set('[data-lot-status]', 'Preview · synthetic');
     set('[data-lot-price]', `¥${preview.priceJpy.toLocaleString('ja-JP')}`);
@@ -70,6 +84,7 @@ if (root) {
     }));
     set('[data-lot-id]', lot.id);
     const hasPhoto = /^data:image\/(?:jpeg|png|webp|avif);base64,[a-z0-9+/=]+$/i.test(observation.image_ref);
+    if (!hasPhoto) showReference(facts.species_label);
     if (hasPhoto && photo) {
       photo.closest('picture')?.querySelectorAll('source').forEach((source) => source.remove());
       photo.removeAttribute('srcset');
