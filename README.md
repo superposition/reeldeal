@@ -62,7 +62,7 @@ It prints `health: {"ok":true,"db":"up","backends":{"decision":"stub"}}`,
 then a published listing, `missing weight: pending_review → publish 409
 (noul)`, two signed offers, rejected tampering/replay, and `SMOKE OK`.
 Accept/pay are explicitly skipped when no seller token is supplied. This
-write smoke refuses non-local API hosts. The current checkout passed 93 Bun tests, nine
+write smoke refuses non-local API hosts. The current checkout passed 103 Bun tests, nine
 Astro static pages, and six Forge tests; see the ticket handoff for exact run
 evidence. Do not use personal landing data in this demo.
 
