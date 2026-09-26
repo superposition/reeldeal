@@ -1,5 +1,6 @@
 ---
 import type { PreviewLot } from '../data/preview-lots';
+import AuditDrawer from './AuditDrawer.astro';
 
 const { lot } = Astro.props as { lot: PreviewLot };
 ---
@@ -16,4 +17,5 @@ const { lot } = Astro.props as { lot: PreviewLot };
     <span>Guide price</span>
     <span>¥{lot.priceJpy.toLocaleString('ja-JP')}</span>
   </div>
+  <AuditDrawer lotId={lot.id} preview={lot.status === 'Preview lot'} />
 </article>

@@ -1,0 +1,132 @@
+---
+const { lotId, preview = false } = Astro.props as { lotId: string; preview?: boolean };
+const apiBase = import.meta.env.PUBLIC_API_BASE_URL ?? '';
+---
+
+<details class="audit-drawer" data-audit-drawer data-lot-id={lotId} data-preview={preview} data-api-base={apiBase}>
+  <summary>Activity trail <span aria-hidden="true">↗</span></summary>
+  {preview ? (
+    <p class="audit-drawer__message">Preview lot. No actions have been recorded for it.</p>
+  ) : (
+    <div class="audit-drawer__body">
+      <p class="audit-drawer__message" data-audit-message role="status" aria-live="polite">Open to load this lot’s recorded actions.</p>
+      <div class="audit-drawer__connection" data-audit-connection hidden>
+        <label for={`audit-api-${lotId}`}>Public API address</label>
+        <input id={`audit-api-${lotId}`} type="url" placeholder="https://api.example.com" data-audit-api />
+        <button type="button" data-audit-connect>Connect</button>
+      </div>
+      <ol class="audit-drawer__timeline" data-audit-timeline hidden></ol>
+    </div>
+  )}
+</details>
+
+<script>
+  type AuditEvent = {
+    actor_kind: string; actor_id: string; from_status: string | null;
+    to_status: string | null; at: number; payload: unknown;
+  };
+
+  for (const drawer of document.querySelectorAll<HTMLDetailsElement>('[data-audit-drawer]:not([data-preview="true"])')) {
+    const message = drawer.querySelector<HTMLElement>('[data-audit-message]');
+    const connection = drawer.querySelector<HTMLElement>('[data-audit-connection]');
+    const apiInput = drawer.querySelector<HTMLInputElement>('[data-audit-api]');
+    const connect = drawer.querySelector<HTMLButtonElement>('[data-audit-connect]');
+    const timeline = drawer.querySelector<HTMLOListElement>('[data-audit-timeline]');
+    if (!message || !connection || !apiInput || !connect || !timeline) continue;
+
+    let remembered = '';
+    try { remembered = localStorage.getItem('reeldeal_api_base') ?? ''; } catch { /* optional */ }
+    const localDefault = ['localhost', '127.0.0.1'].includes(location.hostname) ? 'http://127.0.0.1:8787' : '';
+    apiInput.value = drawer.dataset.apiBase || remembered || localDefault;
+    let loaded = false;
+
+    const origin = () => {
+      const url = new URL(apiInput.value.trim());
+      const local = ['localhost', '127.0.0.1'].includes(url.hostname);
+      if (url.protocol !== 'https:' && !(local && url.protocol === 'http:')) {
+        throw new Error('Use HTTPS, or localhost for development.');
+      }
+      return url.origin;
+    };
+
+    const render = (events: AuditEvent[]) => {
+      timeline.replaceChildren();
+      if (events.length === 0) {
+        message.textContent = 'No actions are recorded for this lot yet.';
+        timeline.hidden = true;
+        return;
+      }
+      for (const event of [...events].reverse()) {
+        const item = document.createElement('li');
+        const action = document.createElement('strong');
+        action.textContent = event.from_status && event.to_status
+          ? `${event.from_status} → ${event.to_status}`
+          : event.to_status ?? event.from_status ?? 'Recorded action';
+        const actor = document.createElement('span');
+        actor.textContent = `${event.actor_kind} · ${event.actor_id}`;
+        const time = document.createElement('time');
+        time.dateTime = new Date(event.at).toISOString();
+        time.textContent = new Date(event.at).toLocaleString();
+        item.append(action, actor, time);
+        if (event.payload !== null) {
+          const detail = document.createElement('details');
+          const summary = document.createElement('summary');
+          const payload = document.createElement('code');
+          summary.textContent = 'Details';
+          payload.textContent = JSON.stringify(event.payload);
+          detail.append(summary, payload);
+          item.append(detail);
+        }
+        timeline.append(item);
+      }
+      message.textContent = `${events.length} recorded action${events.length === 1 ? '' : 's'}.`;
+      timeline.hidden = false;
+    };
+
+    const load = async () => {
+      if (!apiInput.value.trim()) {
+        connection.hidden = false;
+        message.textContent = 'Connect the public API to inspect recorded actions.';
+        return;
+      }
+      message.textContent = 'Loading recorded actions…';
+      try {
+        const base = origin();
+        try { localStorage.setItem('reeldeal_api_base', base); } catch { /* optional */ }
+        const url = new URL(`${base}/v1/audit`);
+        url.searchParams.set('entity', 'Lot');
+        url.searchParams.set('id', drawer.dataset.lotId ?? '');
+        url.searchParams.set('limit', '50');
+        const response = await fetch(url, { signal: AbortSignal.timeout(12_000) });
+        if (!response.ok) throw new Error('The audit API could not load this lot.');
+        const body = await response.json() as { events?: AuditEvent[] };
+        render(body.events ?? []);
+        connection.hidden = true;
+        loaded = true;
+      } catch (error) {
+        message.textContent = error instanceof Error ? error.message : 'The audit trail could not be loaded.';
+        connection.hidden = false;
+      }
+    };
+
+    drawer.addEventListener('toggle', () => { if (drawer.open && !loaded) void load(); });
+    connect.addEventListener('click', () => { loaded = false; void load(); });
+  }
+</script>
+
+<style>
+  .audit-drawer { margin-top: var(--space-4); border-top: var(--border-hairline); }
+  .audit-drawer > summary { min-height: var(--tap-size); display: flex; align-items: center; justify-content: space-between; cursor: pointer; font-weight: 700; }
+  .audit-drawer__body { padding-bottom: var(--space-2); }
+  .audit-drawer__message { margin: 0 0 var(--space-2); color: var(--color-ink-soft); font-size: .875rem; }
+  .audit-drawer__connection { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+  .audit-drawer__connection label { width: 100%; font-size: .875rem; font-weight: 700; }
+  .audit-drawer__connection input { min-height: var(--tap-size); min-width: min(100%, 16rem); flex: 1; padding: var(--space-2); font: inherit; }
+  .audit-drawer__connection button { min-height: var(--tap-size); padding-inline: var(--space-3); font: inherit; cursor: pointer; }
+  .audit-drawer__timeline { list-style: none; margin: var(--space-3) 0 0; padding: 0 0 0 var(--space-3); border-left: 2px solid var(--color-line); }
+  .audit-drawer__timeline li { display: grid; gap: 2px; margin: 0 0 var(--space-4); padding-left: var(--space-3); overflow-wrap: anywhere; }
+  .audit-drawer__timeline strong { font-size: .875rem; }
+  .audit-drawer__timeline span, .audit-drawer__timeline time { color: var(--color-ink-soft); font-size: .75rem; }
+  .audit-drawer__timeline details { margin-top: var(--space-1); font-size: .75rem; }
+  .audit-drawer__timeline code { display: block; padding-block: var(--space-1); white-space: pre-wrap; overflow-wrap: anywhere; }
+</style>
