@@ -47,16 +47,16 @@ The public artifact is about 291 MB, so loading is asynchronous with visible pro
 
 ## Review gate
 
-The API uses one policy implementation and records its version, inputs, outcome, and reason codes. Suggested constants for `packages/decision/src/thresholds.ts` are `CONFIDENCE_MIN = 0.75`, `SPECIES_MIN = 0.60`, `SPECIES_CONFLICT_DELTA = 0.10`, and `REQUIRE_SCALE_STABLE = true`. The UI may preview the result, but the API is authoritative.
+The API uses one policy implementation and records its version, inputs, outcome, and reason codes. The v1 constants in `packages/domain/src/gate.ts` are `CONFIDENCE_MIN = 0.80`, `SPECIES_MIN = 0.60`, `SPECIES_CONFLICT_DELTA = 0.10`, and `REQUIRE_SCALE_STABLE = true`. The UI may preview the result, but the API is authoritative.
 
 | Condition | Outcome |
 | --- | --- |
 | Required fact missing, invalid, or contradictory; `noul_value: false` for completeness | `pending_review`, regardless of confidence. |
 | No operator-confirmed species; top candidate below `0.60`; or two candidate scores differ by at most `0.10` | `pending_review`, regardless of model confidence. |
 | Scale unstable or scale reading conflicts with recorded weight | `pending_review`, regardless of model confidence. |
-| Confidence below `0.50` | `pending_review`; display the uncertainty and require explicit operator action. |
-| Confidence from `0.50` to below `0.75` | `pending_review`, the ordinary uncertainty band. |
-| Confidence at least `0.75`, complete facts, confirmed species, no conflict, valid typed result | Eligible for `approved`; this is a policy decision, not model authority. |
+| Confidence below `0.60` | `pending_review`; display the uncertainty and require explicit operator action. |
+| Confidence from `0.60` to below `0.80` | `pending_review`, the ordinary uncertainty band. |
+| Confidence at least `0.80`, complete facts, confirmed species, no conflict, valid typed result | Eligible for `approved`; this is a policy decision, not model authority. |
 
 The gate never turns low confidence into automatic rejection. An operator can correct a field with a reason and attribution; the original observation and decision remain unchanged. The effective value is the latest correction, followed by a new gate evaluation. A lot records the originating `decision_id` and model version, plus references to corrections and the policy version. An approved lot can proceed to listing only through the normal domain transition.
 
