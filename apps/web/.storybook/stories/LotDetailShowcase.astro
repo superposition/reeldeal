@@ -1,0 +1,23 @@
+---
+import BaseLayout from '../../src/layouts/BaseLayout.astro';
+import LotDetailView from '../../src/components/LotDetailView.astro';
+import type { Detail } from '../../src/lib/lot-detail';
+
+const { initialDetail, initialState, initialMessage, initialProofOpen, initialAuditOpen } = Astro.props as {
+  initialDetail?: Detail;
+  initialState?: 'loading' | 'unavailable';
+  initialMessage?: string;
+  initialProofOpen?: boolean;
+  initialAuditOpen?: boolean;
+};
+---
+
+<BaseLayout title="Lot details" description="Visual reference for a synthetic Kesennuma demo lot." section="shop">
+  <LotDetailView
+    detail={initialDetail}
+    state={initialState}
+    message={initialMessage}
+    proofOpen={initialProofOpen}
+    auditOpen={initialAuditOpen}
+  />
+</BaseLayout>
