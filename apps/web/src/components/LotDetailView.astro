@@ -25,6 +25,7 @@ const facts = detail?.effective_facts;
 const observation = detail?.observation;
 const decision = detail?.typed_decision;
 const corrections = detail?.corrections ?? [];
+const correctedFields = new Set(corrections.map((correction) => correction.field));
 const hasPhoto = !!observation && /^data:image\/(?:jpeg|png|webp|avif);base64,[a-z0-9+/=]+$/i.test(observation.image_ref);
 const decisionAnswer = decision?.kind === 'choice' ? decision.choice ?? 'No answer'
   : decision?.kind === 'score' ? `${Math.round((decision.score ?? 0) * 100)}% recorded score`
@@ -68,10 +69,13 @@ const checkSummary = detail && (corrections.length > 0
     </div>
     <div class="market-detail__copy">
       <p class="market-detail__kicker">Kesennuma landing</p>
-      <h1 data-lot-title>{facts?.species_label ?? (ready ? 'Species not recorded' : 'Lot details')}</h1>
+      <div class="market-detail__name">
+        <h1 data-lot-title>{facts?.species_label ?? (ready ? 'Species not recorded' : 'Lot details')}</h1>
+        <small class="market-detail__human-note" data-correction-species hidden={!correctedFields.has('species_label')}>Human-corrected</small>
+      </div>
       <div class="market-detail__facts-grid">
-        <div><span>Weight</span><strong data-lot-weight>{facts ? facts.weight_g === null ? 'Not recorded' : `${facts.weight_g.toLocaleString('ja-JP')} g` : ''}</strong></div>
-        <div><span>Length</span><strong data-lot-length>{facts ? facts.length_mm === null ? 'Not recorded' : `${facts.length_mm} mm` : ''}</strong></div>
+        <div><span>Weight</span><strong data-lot-weight>{facts ? facts.weight_g === null ? 'Not recorded' : `${facts.weight_g.toLocaleString('ja-JP')} g` : ''}</strong><small class="market-detail__human-note" data-correction-weight hidden={!correctedFields.has('weight_g')}>Human-corrected</small></div>
+        <div><span>Length</span><strong data-lot-length>{facts ? facts.length_mm === null ? 'Not recorded' : `${facts.length_mm} mm` : ''}</strong><small class="market-detail__human-note" data-correction-length hidden={!correctedFields.has('length_mm')}>Human-corrected</small></div>
         <div><span>Landed</span><strong data-lot-landed>{observation ? new Date(observation.captured_at).toLocaleString('ja-JP', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : ''}</strong></div>
       </div>
       <div class="market-detail__signals" aria-label="Lot status and evidence">
@@ -120,6 +124,20 @@ const checkSummary = detail && (corrections.length > 0
 <style>
   .market-detail__recovery { margin-block: var(--space-3) var(--space-5); }
   .market-detail__recovery[hidden] { display: none; }
+  .market-detail__name { display: flex; flex-wrap: wrap; align-items: end; gap: 4px 8px; min-width: 0; }
+  .market-detail__human-note {
+    display: inline-block; max-width: 100%; padding: 2px 4px;
+    border: 1px solid var(--color-ink); border-radius: 4px;
+    background: var(--color-review); color: var(--color-ink);
+    font-family: var(--font-impact); font-size: .57rem; font-weight: 900;
+    line-height: 1.05; text-align: center; text-transform: uppercase; overflow-wrap: anywhere;
+  }
+  .market-detail__human-note[hidden] { display: none; }
+  .market-detail__facts-grid .market-detail__human-note {
+    justify-self: center; padding-inline: 2px;
+    font-family: var(--font-body); font-size: .6rem; font-weight: 900;
+    text-transform: none; overflow-wrap: normal;
+  }
   @media (max-width: 350px) {
     .market-detail__signal { gap: 4px; padding-inline: 5px; }
     .market-detail__signal .rd-ui-badge__dot { width: 11px; height: 11px; }

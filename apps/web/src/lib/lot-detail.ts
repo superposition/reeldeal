@@ -56,6 +56,10 @@ if (root) {
     set('[data-signal-species]', 'Sample label');
     set('[data-signal-review]', 'No review record');
     set('[data-signal-photo]', 'No photo');
+    for (const field of ['species', 'weight', 'length']) {
+      const marker = root?.querySelector<HTMLElement>(`[data-correction-${field}]`);
+      if (marker) marker.hidden = true;
+    }
     if (evidenceAction) {
       evidenceAction.href = new URL('../', location.href).pathname;
       evidenceAction.textContent = 'Back to lots';
@@ -78,6 +82,11 @@ if (root) {
     set('[data-lot-species]', facts.species_label ?? 'Not confirmed');
     set('[data-lot-weight]', facts.weight_g === null ? 'Not recorded' : `${facts.weight_g.toLocaleString('ja-JP')} g`);
     set('[data-lot-length]', facts.length_mm === null ? 'Not recorded' : `${facts.length_mm} mm`);
+    const correctedFields = new Set(corrections.map((correction) => correction.field));
+    for (const [field, source] of [['species', 'species_label'], ['weight', 'weight_g'], ['length', 'length_mm']]) {
+      const marker = root?.querySelector<HTMLElement>(`[data-correction-${field}]`);
+      if (marker) marker.hidden = !correctedFields.has(source);
+    }
     set('[data-lot-landed]', new Date(observation.captured_at).toLocaleString('ja-JP', {
       month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit',
     }));
