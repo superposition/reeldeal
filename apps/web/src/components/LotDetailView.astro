@@ -1,0 +1,131 @@
+---
+import { Picture, getImage } from 'astro:assets';
+import Button from './ui/Button.astro';
+import placeholder from '../assets/landing-placeholder.png';
+import type { Detail } from '../lib/lot-detail';
+import { fish } from '../data/fish';
+
+interface Props {
+  detail?: Detail;
+  state?: 'loading' | 'unavailable';
+  message?: string;
+  apiOrigin?: string;
+  proofOpen?: boolean;
+  auditOpen?: boolean;
+}
+
+const { detail, state = 'loading', message, apiOrigin = '', proofOpen = false, auditOpen = false } = Astro.props;
+const ready = !!detail;
+const unavailable = !ready && state === 'unavailable';
+const base = import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL : `${import.meta.env.BASE_URL}/`;
+const images = Object.fromEntries(await Promise.all(fish.map(async (item) => [item.slug, (await getImage({ src: item.image, width: 960 })).src])));
+const statusName: Record<string, string> = {
+  listed: 'Open', reserved: 'Reserved', sold: 'Sold', approved: 'Approved, not listed', pending_review: 'Review needed', withdrawn: 'Withdrawn',
+};
+const lot = detail?.lot;
+const facts = detail?.effective_facts;
+const observation = detail?.observation;
+const decision = detail?.typed_decision;
+const corrections = detail?.corrections ?? [];
+const hasPhoto = !!observation && /^data:image\/(?:jpeg|png|webp|avif);base64,[a-z0-9+/=]+$/i.test(observation.image_ref);
+const decisionAnswer = decision?.kind === 'choice' ? decision.choice ?? 'No answer'
+  : decision?.kind === 'score' ? `${Math.round((decision.score ?? 0) * 100)}% recorded score`
+    : decision?.kind === 'noul' ? decision.noul_value ? 'Yes' : 'No' : '';
+const checkSummary = detail && (corrections.length > 0
+  ? `An operator corrected ${corrections.length} recorded field${corrections.length === 1 ? '' : 's'}; the original decision remains in the trail.`
+  : detail.gate.route === 'auto_approve' ? 'Required landing checks passed.'
+    : `Operator review required: ${lot?.gate_reason ?? detail.gate.reason.replaceAll('_', ' ')}.`);
+---
+
+<div class="shell market-detail" data-lot-detail data-api-origin={apiOrigin} data-fish-images={JSON.stringify(images)}>
+  <p class="market-status" data-lot-message role="status" aria-live="polite" data-error={unavailable ? 'true' : undefined}>
+    {message ?? (unavailable ? 'This lot is unavailable. Return to the market and choose another lot.' : ready ? '' : 'Loading lot…')}
+  </p>
+  <div class="market-detail__recovery" data-lot-recovery hidden={!unavailable}>
+    <Button href={`${base}shop/`} variant="secondary">Back to lots</Button>
+  </div>
+
+  <div class="market-detail__content" data-lot-content hidden={!ready}>
+    <div class="market-detail__media">
+      {hasPhoto ? (
+        <img src={observation?.image_ref} width="960" height="720" alt={`Landing photograph for ${facts?.species_label ?? 'this lot'}`} data-lot-image />
+      ) : (
+        <Picture
+          src={placeholder}
+          formats={['avif', 'webp']}
+          widths={[480, 960]}
+          sizes="392px"
+          width={960}
+          height={720}
+          alt="Illustrated fish silhouette; no landing photograph"
+          loading="eager"
+          data-lot-image
+        />
+      )}
+      <span class="rd-ui-badge rd-ui-badge--lime market-detail__photo-badge">
+        <span class="rd-ui-badge__dot" aria-hidden="true"></span>
+        <strong data-lot-status>{lot ? statusName[lot.status] ?? lot.status : 'Loading'}</strong>
+      </span>
+      <p data-photo-caption hidden={!hasPhoto}>Landing photo supplied.</p>
+    </div>
+    <div class="market-detail__copy">
+      <p class="market-detail__kicker">ReelDeal / Japan’s east coast</p>
+      <h1 data-lot-title>{facts?.species_label ?? (ready ? 'Species not recorded' : 'Lot details')}</h1>
+      <div class="market-detail__facts-grid">
+        <div><span>Weight</span><strong data-lot-weight>{facts ? facts.weight_g === null ? 'Not recorded' : `${facts.weight_g.toLocaleString('ja-JP')} g` : ''}</strong></div>
+        <div><span>Length</span><strong data-lot-length>{facts ? facts.length_mm === null ? 'Not recorded' : `${facts.length_mm} mm` : ''}</strong></div>
+        <div><span>Landed</span><strong data-lot-landed>{observation ? new Date(observation.captured_at).toLocaleString('ja-JP', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : ''}</strong></div>
+      </div>
+      <div class="market-detail__signals" aria-label="Lot status and evidence">
+        <span class="rd-ui-badge rd-ui-badge--lime market-detail__signal"><span class="rd-ui-badge__dot" aria-hidden="true"></span><strong data-signal-status>{lot ? statusName[lot.status] ?? lot.status : 'Status loading'}</strong></span>
+        <span class="rd-ui-badge rd-ui-badge--blue market-detail__signal"><span class="rd-ui-badge__dot" aria-hidden="true"></span><strong data-signal-species>{facts ? facts.species_confirmed_by ? 'Species confirmed' : 'Species unconfirmed' : 'Species loading'}</strong></span>
+        <span class="rd-ui-badge rd-ui-badge--pink market-detail__signal"><span class="rd-ui-badge__dot" aria-hidden="true"></span><strong data-signal-review>{ready ? corrections.length > 0 ? `${corrections.length} human correction${corrections.length === 1 ? '' : 's'}` : lot?.status === 'pending_review' ? 'Review needed' : 'No corrections' : 'Review loading'}</strong></span>
+        <span class="rd-ui-badge rd-ui-badge--yellow market-detail__signal"><span class="rd-ui-badge__dot" aria-hidden="true"></span><strong data-signal-photo>{ready ? hasPhoto ? 'Landing photo' : 'No photo' : 'Photo loading'}</strong></span>
+      </div>
+      <div class="market-detail__buy-bar">
+        <strong data-lot-price>{lot ? `¥${lot.price_jpy.toLocaleString('ja-JP')}` : ''}</strong>
+        <div data-evidence-action><Button href="#lot-evidence" class="market-detail__browse">View proof</Button></div>
+      </div>
+      <p class="market-head__note">Prices in JPY · settlement in JPYC</p>
+    </div>
+  </div>
+
+  <div class="market-detail__evidence" data-lot-evidence hidden={!ready}>
+    <details id="lot-evidence" open={proofOpen}>
+      <summary>How this lot was checked</summary>
+      <p data-check-summary>{checkSummary}</p>
+      <dl>
+        <div><dt>Decision</dt><dd data-decision-answer>{decisionAnswer}</dd></div>
+        <div><dt>Confidence source</dt><dd data-decision-source>{decision ? `${decision.confidence_source.replaceAll('_', ' ')} · ${Math.round(decision.confidence * 100)}%` : ''}</dd></div>
+        <div><dt>Backend</dt><dd data-decision-backend>{decision?.model.id}</dd></div>
+        <div><dt>Model version</dt><dd data-decision-version>{decision?.model.version}</dd></div>
+        <div><dt>Reported weights hash</dt><dd data-decision-hash>{decision?.model.sha256 ?? (ready ? 'Not applicable' : '')}</dd></div>
+      </dl>
+      <p class="market-detail__caveat">This evidence records the browser’s reported decision. It does not prove fish quality or species recognition.</p>
+    </details>
+    <details open={auditOpen}>
+      <summary>Activity trail</summary>
+      <ol class="market-detail__audit" data-lot-audit>
+        {detail?.audit.length === 0 && <li>No recorded actions are available for this lot.</li>}
+        {detail?.audit.map((event) => (
+          <li>
+            <strong>{event.entity_type}: {event.from_status ?? 'new'} → {event.to_status ?? 'recorded'}</strong>
+            <span>{event.actor_kind} · {event.actor_id} · {new Date(event.at).toLocaleString('ja-JP')}</span>
+          </li>
+        ))}
+      </ol>
+      <p class="market-detail__lot-id">Lot ID <code data-lot-id>{lot?.id}</code></p>
+    </details>
+  </div>
+  <a href={`${base}#image-credits`}>Image credits</a>
+</div>
+
+<style>
+  .market-detail__recovery { margin-block: var(--space-3) var(--space-5); }
+  .market-detail__recovery[hidden] { display: none; }
+  @media (max-width: 350px) {
+    .market-detail__signal { gap: 4px; padding-inline: 5px; }
+    .market-detail__signal .rd-ui-badge__dot { width: 11px; height: 11px; }
+    .market-detail__signal strong { font-size: .57rem; }
+  }
+</style>

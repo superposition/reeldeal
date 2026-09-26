@@ -6,7 +6,10 @@
 /* The production layout owns the phone frame; isolated stories need only its canvas. */
 .sb-show-main.sb-main-padded { padding: 20px; }
 #storybook-root { width: min(393px, calc(100vw - 40px)); }
+.sb-show-main.sb-main-fullscreen #storybook-root { width: 100%; }
 
 /* Astro's static story renderer leaves <Picture> at a dev-only /@fs URL. */
 .market-card__media { background: url('/story-assets/landing-placeholder.png') center / cover; }
 .market-card__media picture { visibility: hidden; }
+.market-detail__media { background: url('/story-assets/landing-placeholder.png') center / cover; }
+.market-detail__media picture { visibility: hidden; }

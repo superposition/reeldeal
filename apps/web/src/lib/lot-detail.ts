@@ -1,6 +1,6 @@
 import { previewLots } from '../data/preview-lots';
 
-type Detail = {
+export type Detail = {
   lot: { id: string; species_label: string | null; weight_g: number | null; price_jpy: number; status: string; gate_reason: string | null };
   effective_facts: { species_label: string | null; species_confirmed_by: string | null; length_mm: number | null; weight_g: number | null; human_corrected: boolean };
   observation: { length_mm: number | null; captured_at: string; image_ref: string };
@@ -19,6 +19,7 @@ if (root) {
   const id = new URLSearchParams(location.search).get('id');
   const api = (root.dataset.apiOrigin ?? '').replace(/\/$/, '');
   const message = root.querySelector<HTMLElement>('[data-lot-message]');
+  const recovery = root.querySelector<HTMLElement>('[data-lot-recovery]');
   const content = root.querySelector<HTMLElement>('[data-lot-content]');
   const evidence = root.querySelector<HTMLElement>('[data-lot-evidence]');
   const evidenceAction = root.querySelector<HTMLAnchorElement>('[data-evidence-action] a');
@@ -41,6 +42,13 @@ if (root) {
     const caption = root?.querySelector<HTMLElement>('[data-photo-caption]');
     if (caption) caption.hidden = false;
   }
+  const showUnavailable = (text: string) => {
+    if (message) {
+      message.textContent = text;
+      message.dataset.error = 'true';
+    }
+    if (recovery) recovery.hidden = false;
+  };
 
   function showPreview(lotId: string): boolean {
     const preview = previewLots.find((lot) => lot.id === lotId);
@@ -65,6 +73,7 @@ if (root) {
     if (content) content.hidden = false;
     if (evidence) evidence.hidden = true;
     if (message) message.textContent = 'This is an illustrative preview, not current market inventory.';
+    if (recovery) recovery.hidden = true;
     return true;
   }
 
@@ -137,6 +146,7 @@ if (root) {
     if (content) content.hidden = false;
     if (evidence) evidence.hidden = false;
     if (message) message.textContent = '';
+    if (recovery) recovery.hidden = true;
   }
 
   evidenceAction?.addEventListener('click', () => {
@@ -144,9 +154,9 @@ if (root) {
   });
 
   if (!id) {
-    if (message) message.textContent = 'No lot was selected. Return to the market and choose a lot.';
+    showUnavailable('No lot was selected. Return to the market and choose a lot.');
   } else if (!api) {
-    if (!showPreview(id) && message) message.textContent = 'The public market API is not connected, so this lot cannot be checked.';
+    if (!showPreview(id)) showUnavailable('The public market API is not connected, so this lot cannot be checked.');
   } else {
     void fetch(`${api}/v1/lots/${encodeURIComponent(id)}`, { signal: AbortSignal.timeout(12_000) })
       .then(async (response) => {
@@ -155,7 +165,7 @@ if (root) {
       })
       .then(showLive)
       .catch((error) => {
-        if (!showPreview(id) && message) message.textContent = error instanceof Error ? error.message : 'The lot could not be loaded.';
+        if (!showPreview(id)) showUnavailable(error instanceof Error ? error.message : 'The lot could not be loaded.');
       });
   }
 }

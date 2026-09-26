@@ -1,0 +1,36 @@
+.intake-head {
+  margin: 10px 10px 0;
+  padding: var(--space-3) 0;
+  border: 3px solid var(--color-ink);
+  border-radius: var(--radius-card);
+  background: var(--color-water);
+  color: var(--color-ink);
+}
+
+.intake-head .eyebrow {
+  margin: 0;
+  color: var(--color-ink);
+  font-size: .65rem;
+  letter-spacing: .06em;
+}
+
+.intake-head h1 {
+  max-width: none;
+  margin: 0;
+  font-family: var(--font-impact);
+  font-size: clamp(1.5rem, 7vw, 1.85rem);
+  letter-spacing: -.05em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.intake-head p:last-child {
+  margin: var(--space-1) 0 0;
+  font-size: .75rem;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.intake-main {
+  padding-block: var(--space-3) var(--space-6);
+}

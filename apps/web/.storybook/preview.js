@@ -9,6 +9,8 @@ export default {
     viewport: {
       defaultViewport: 'mobile393',
       viewports: {
+        mobile320: { name: 'Mobile 320', styles: { width: '320px', height: '720px' } },
+        mobile390: { name: 'Mobile 390', styles: { width: '390px', height: '844px' } },
         mobile393: { name: 'Mobile 393', styles: { width: '393px', height: '852px' } },
         desktop1280: { name: 'Desktop 1280', styles: { width: '1280px', height: '900px' } },
       },

@@ -1,84 +1,23 @@
 ---
-import { Picture, getImage } from 'astro:assets';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
-import Button from '../../../components/ui/Button.astro';
-import placeholder from '../../../assets/landing-placeholder.png';
+import LotDetailView from '../../../components/LotDetailView.astro';
+import type { Detail } from '../../../lib/lot-detail';
 import '../../../styles/market.css';
-import { fish } from '../../../data/fish';
 
-const base = import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL : `${import.meta.env.BASE_URL}/`;
 const apiOrigin = import.meta.env.PUBLIC_API_ORIGIN
   ?? import.meta.env.PUBLIC_API_BASE_URL
   ?? (import.meta.env.DEV ? 'http://127.0.0.1:8787' : '');
-const images = Object.fromEntries(await Promise.all(fish.map(async (item) => [item.slug, (await getImage({ src: item.image, width: 960 })).src])));
+const { initialDetail, initialState, initialMessage, initialProofOpen, initialAuditOpen } = Astro.props as {
+  initialDetail?: Detail;
+  initialState?: 'loading' | 'unavailable';
+  initialMessage?: string;
+  initialProofOpen?: boolean;
+  initialAuditOpen?: boolean;
+};
 ---
 
 <BaseLayout title="Lot details" description="Check the landing facts and current status for a market lot." section="shop">
-  <div class="shell market-detail" data-lot-detail data-api-origin={apiOrigin} data-fish-images={JSON.stringify(images)}>
-    <p class="market-status" data-lot-message role="status" aria-live="polite">Loading lot…</p>
-
-    <div class="market-detail__content" data-lot-content hidden>
-      <div class="market-detail__media">
-        <Picture
-          src={placeholder}
-          formats={['avif', 'webp']}
-          widths={[480, 960]}
-          sizes="392px"
-          width={960}
-          height={720}
-          alt="Illustrated fish silhouette; no landing photograph"
-          loading="eager"
-          data-lot-image
-        />
-        <span class="rd-ui-badge rd-ui-badge--lime market-detail__photo-badge">
-          <span class="rd-ui-badge__dot" aria-hidden="true"></span>
-          <strong data-lot-status>Loading</strong>
-        </span>
-        <p data-photo-caption hidden>Landing photo supplied.</p>
-      </div>
-      <div class="market-detail__copy">
-        <p class="market-detail__kicker">ReelDeal / Japan’s east coast</p>
-        <h1 data-lot-title>Lot details</h1>
-        <div class="market-detail__facts-grid">
-          <div><span>Weight</span><strong data-lot-weight></strong></div>
-          <div><span>Length</span><strong data-lot-length></strong></div>
-          <div><span>Landed</span><strong data-lot-landed></strong></div>
-        </div>
-        <div class="market-detail__signals" aria-label="Lot status and evidence">
-          <span class="rd-ui-badge rd-ui-badge--lime market-detail__signal"><span class="rd-ui-badge__dot" aria-hidden="true"></span><strong data-signal-status>Status loading</strong></span>
-          <span class="rd-ui-badge rd-ui-badge--blue market-detail__signal"><span class="rd-ui-badge__dot" aria-hidden="true"></span><strong data-signal-species>Species loading</strong></span>
-          <span class="rd-ui-badge rd-ui-badge--pink market-detail__signal"><span class="rd-ui-badge__dot" aria-hidden="true"></span><strong data-signal-review>Review loading</strong></span>
-          <span class="rd-ui-badge rd-ui-badge--yellow market-detail__signal"><span class="rd-ui-badge__dot" aria-hidden="true"></span><strong data-signal-photo>Photo loading</strong></span>
-        </div>
-        <div class="market-detail__buy-bar">
-          <strong data-lot-price></strong>
-          <div data-evidence-action><Button href="#lot-evidence" class="market-detail__browse">View proof</Button></div>
-        </div>
-        <p class="market-head__note">Prices in JPY · settlement in JPYC</p>
-      </div>
-    </div>
-
-    <div class="market-detail__evidence" data-lot-evidence hidden>
-      <details id="lot-evidence">
-        <summary>How this lot was checked</summary>
-        <p data-check-summary></p>
-        <dl>
-          <div><dt>Decision</dt><dd data-decision-answer></dd></div>
-          <div><dt>Confidence source</dt><dd data-decision-source></dd></div>
-          <div><dt>Backend</dt><dd data-decision-backend></dd></div>
-          <div><dt>Model version</dt><dd data-decision-version></dd></div>
-          <div><dt>Reported weights hash</dt><dd data-decision-hash></dd></div>
-        </dl>
-        <p class="market-detail__caveat">This evidence records the browser’s reported decision. It does not prove fish quality or species recognition.</p>
-      </details>
-      <details>
-        <summary>Activity trail</summary>
-        <ol class="market-detail__audit" data-lot-audit></ol>
-        <p class="market-detail__lot-id">Lot ID <code data-lot-id></code></p>
-      </details>
-    </div>
-    <a href={`${base}#image-credits`}>Image credits</a>
-  </div>
+  <LotDetailView detail={initialDetail} state={initialState} message={initialMessage} proofOpen={initialProofOpen} auditOpen={initialAuditOpen} apiOrigin={apiOrigin} />
 </BaseLayout>
 
 <script>
