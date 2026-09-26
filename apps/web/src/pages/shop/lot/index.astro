@@ -1,12 +1,14 @@
 ---
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import LotDetailView from '../../../components/LotDetailView.astro';
+import BidPanel from '../../../components/BidPanel.tsx';
 import type { Detail } from '../../../lib/lot-detail';
 import '../../../styles/market.css';
 
 const apiOrigin = import.meta.env.PUBLIC_API_ORIGIN
   ?? import.meta.env.PUBLIC_API_BASE_URL
   ?? (import.meta.env.DEV ? 'http://127.0.0.1:8787' : '');
+const bidChainId = Number(import.meta.env.PUBLIC_CHAIN_ID ?? '1');
 const { initialDetail, initialState, initialMessage, initialProofOpen, initialAuditOpen } = Astro.props as {
   initialDetail?: Detail;
   initialState?: 'loading' | 'unavailable';
@@ -17,7 +19,11 @@ const { initialDetail, initialState, initialMessage, initialProofOpen, initialAu
 ---
 
 <BaseLayout title="Lot details" description="Check the landing facts and current status for a Kesennuma market lot." section="shop">
-  <LotDetailView detail={initialDetail} state={initialState} message={initialMessage} proofOpen={initialProofOpen} auditOpen={initialAuditOpen} apiOrigin={apiOrigin} />
+  <LotDetailView detail={initialDetail} state={initialState} message={initialMessage} proofOpen={initialProofOpen} auditOpen={initialAuditOpen} apiOrigin={apiOrigin}>
+    <div slot="offer" data-lot-bidding hidden>
+      <BidPanel client:visible apiOrigin={apiOrigin} chainId={bidChainId} />
+    </div>
+  </LotDetailView>
 </BaseLayout>
 
 <script>

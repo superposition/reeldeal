@@ -98,7 +98,7 @@ flowchart LR
     I --> J
 
     J --> K[Marketplace listing]
-    K -. planned .-> L[Buyer signs EIP-712 bid]
+    K --> L[Buyer signs EIP-712 bid]
     L -. planned .-> M[Seller accepts one winner]
     M -. planned .-> N[Demo sale]
 
@@ -142,8 +142,11 @@ grade or species classifier.
 ## Remaining demo gates and attribution
 
 A real camera capture and cross-session scan-to-listing demonstration still
-need runtime proof. Signed bids, seller acceptance, and demo settlement remain
-pending routes; the diagram marks that planned path. Chain anchoring needs a funded signer, RPC, verified
+need runtime proof. Signed offers are implemented and verified with test-key
+browser fixtures; a real two-wallet playtest remains pending. Seller acceptance
+and demo settlement remain pending routes; the diagram marks that planned path.
+The bid domain uses `PUBLIC_CHAIN_ID` in the web build and `REELDEAL_CHAIN_ID`
+in the API (both default to 1 and must match). Chain anchoring needs a funded signer, RPC, verified
 receipt, contract addresses, and explorer links; the local Forge simulation
 is not an on-chain transaction. The final video and submission are pending.
 The shared demo API has no seller authentication on ordinary write routes;
