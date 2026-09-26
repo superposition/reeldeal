@@ -1,18 +1,18 @@
-import { ObservationSchema, TypedDecisionInputSchema, type Observation, type TypedDecisionInput } from '@reeldeal/domain';
+import {
+  GATE, ObservationSchema, TypedDecisionInputSchema,
+  missingRequiredInputConfidence, stubHeuristicConfidence,
+  type Observation, type TypedDecisionInput,
+} from '@reeldeal/domain';
 import { questions, type DecisionBackend, type QuestionId } from './backend';
 
 const RULE_VERSION = 'rules-v1/questions-v1';
-// These are fixed demo routing scores, not learned or fish-calibrated probabilities.
-const NORMAL_CONFIDENCE = 0.86;
-const LOW_CONFIDENCE = 0.7; // Inside the v1 [0.60, 0.80) review band.
-
 export type StubOptions = { forceLow?: boolean };
 
 function requiredFactsComplete(observation: Observation): boolean {
   const { length_mm, weight_g, scale_reading, species_label, species_confirmed_by } = observation;
   if (length_mm === null || length_mm <= 0 || weight_g === null || weight_g <= 0) return false;
   if (!scale_reading.stable || scale_reading.grams === null) return false;
-  if (Math.abs(scale_reading.grams - weight_g) > Math.max(50, weight_g * 0.05)) return false;
+  if (Math.abs(scale_reading.grams - weight_g) > Math.max(GATE.scaleToleranceG, weight_g * GATE.scaleToleranceFraction)) return false;
   if (!species_label || !species_confirmed_by) return false;
   return true;
 }
@@ -39,8 +39,7 @@ function incomplete(observation: Observation): TypedDecisionInput {
   return checked({
     ...base(observation, 'completeness', 1),
     kind: 'noul', choice: null, score: null, score_raw: null, score_level: null,
-    noul_value: false, noul_probability: 0,
-    confidence_source: 'policy_required_input',
+    ...missingRequiredInputConfidence(),
     model: { id: 'reeldeal-policy', version: RULE_VERSION, runtime: 'js', sha256: null },
     rationale: 'Required measured facts, stable scale, or operator-confirmed species are missing or contradictory; human review required.',
   });
@@ -78,13 +77,18 @@ function decideComplete(observation: Observation, questionId: QuestionId, confid
 
 export function createStubBackend(options: StubOptions = {}): DecisionBackend {
   const envForceLow = typeof process !== 'undefined' && process.env.MODEL_FORCE_LOW === '1';
-  const confidence = (options.forceLow ?? envForceLow) ? LOW_CONFIDENCE : NORMAL_CONFIDENCE;
+  const forceReview = options.forceLow ?? envForceLow;
   return {
     id: 'reeldeal-stub', version: RULE_VERSION, runtime: 'js',
     async decide(input, questionId = 'grade') {
       if (!(questionId in questions)) throw new Error(`unknown question: ${questionId}`);
       const observation = ObservationSchema.parse(input);
       if (!requiredFactsComplete(observation)) return incomplete(observation);
+      const confidence = stubHeuristicConfidence({
+        topSpeciesScore: observation.species_candidates.reduce((best, candidate) => Math.max(best, candidate.score), 0),
+        scaleStable: observation.scale_reading.stable,
+        forceReview,
+      }).confidence;
       return decideComplete(observation, questionId, confidence);
     },
   };

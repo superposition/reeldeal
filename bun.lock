@@ -29,6 +29,9 @@
     },
     "packages/decision": {
       "name": "@reeldeal/decision",
+      "dependencies": {
+        "@reeldeal/domain": "workspace:*",
+      },
     },
     "packages/domain": {
       "name": "@reeldeal/domain",
