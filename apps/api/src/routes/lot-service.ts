@@ -60,7 +60,9 @@ function observationValue(row: FactRow) {
 type CorrectionValue = { field: string; human_value: string; actor_id: string };
 
 export function effectiveObservation(original: ReturnType<typeof observationValue>, corrections: CorrectionValue[]) {
-  let effective = ObservationInputSchema.parse(original);
+  const facts: Record<string, unknown> = { ...original };
+  for (const field of ['id', 'org_id', 'status', 'created_at', 'updated_at']) delete facts[field];
+  let effective = ObservationInputSchema.parse(facts);
   for (const correction of corrections) {
     const value: unknown = JSON.parse(correction.human_value);
     if (correction.field === 'length_mm' && typeof value === 'number') effective = { ...effective, length_mm: value };
