@@ -1,4 +1,5 @@
 import { previewLots } from '../data/preview-lots';
+import { auditActionLabel } from './audit-label';
 
 export type Detail = {
   listing?: { id: string; status: string; price_jpy: number } | null;
@@ -11,7 +12,7 @@ export type Detail = {
     model: { id: string; version: string; sha256?: string | null };
   };
   corrections: Array<{ field: string; model_value: unknown; human_value: unknown; actor_id: string }>;
-  audit: Array<{ entity_type: string; actor_kind: string; actor_id: string; from_status: string | null; to_status: string | null; at: string }>;
+  audit: Array<{ entity_type: string; actor_kind: string; actor_id: string; from_status: string | null; to_status: string | null; at: string; payload?: unknown }>;
   gate: { route: string; reason: string };
 };
 
@@ -129,7 +130,7 @@ if (root) {
       for (const event of detail.audit) {
         const item = document.createElement('li');
         const action = document.createElement('strong');
-        action.textContent = `${event.entity_type}: ${event.from_status ?? 'new'} → ${event.to_status ?? 'recorded'}`;
+        action.textContent = auditActionLabel(event);
         const meta = document.createElement('span');
         meta.textContent = `${event.actor_kind} · ${event.actor_id} · ${new Date(event.at).toLocaleString('ja-JP')}`;
         item.append(action, meta);

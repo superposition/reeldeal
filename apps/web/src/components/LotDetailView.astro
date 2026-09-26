@@ -3,6 +3,7 @@ import { Picture } from 'astro:assets';
 import Button from './ui/Button.astro';
 import placeholder from '../assets/landing-placeholder.png';
 import type { Detail } from '../lib/lot-detail';
+import { auditActionLabel } from '../lib/audit-label';
 
 interface Props {
   detail?: Detail;
@@ -111,7 +112,7 @@ const checkSummary = detail && (corrections.length > 0
         {detail?.audit.length === 0 && <li>No recorded actions are available for this lot.</li>}
         {detail?.audit.map((event) => (
           <li>
-            <strong>{event.entity_type}: {event.from_status ?? 'new'} → {event.to_status ?? 'recorded'}</strong>
+            <strong>{auditActionLabel(event)}</strong>
             <span>{event.actor_kind} · {event.actor_id} · {new Date(event.at).toLocaleString('ja-JP')}</span>
           </li>
         ))}
