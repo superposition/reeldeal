@@ -1,0 +1,60 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ActionTile from '../components/ui/ActionTile.astro';
+import Badge from '../components/ui/Badge.astro';
+import Button from '../components/ui/Button.astro';
+
+const base = import.meta.env.BASE_URL.endsWith('/')
+  ? import.meta.env.BASE_URL
+  : `${import.meta.env.BASE_URL}/`;
+---
+
+<BaseLayout title="Interface preview" description="Static ReelDeal component preview for the demo interface.">
+  <header class="page-heading shell">
+    <p class="eyebrow">Static UI fixture</p>
+    <h1>Interface pieces</h1>
+    <p class="intro">Colors, actions, and states for the demo. Use Tab to inspect keyboard focus.</p>
+  </header>
+
+  <section class="section shell preview-section" aria-labelledby="buttons-title">
+    <h2 id="buttons-title">Buttons</h2>
+    <div class="preview-buttons">
+      <Button href={`${base}shop/`} tone="blue">Browse lots</Button>
+      <Button href={`${base}intake/`} tone="pink">Record landing</Button>
+      <Button tone="yellow" type="button">Default action</Button>
+      <Button tone="ink" type="button">Confirm</Button>
+      <Button tone="blue" variant="secondary" type="button">Secondary</Button>
+      <Button tone="pink" variant="secondary" type="button">Needs review</Button>
+      <Button tone="yellow" disabled>Unavailable</Button>
+    </div>
+  </section>
+
+  <section class="section shell preview-section" aria-labelledby="badges-title">
+    <h2 id="badges-title">Status</h2>
+    <div class="preview-badges">
+      <Badge label="Observed" tone="blue" />
+      <Badge label="Pending review" tone="pink" detail="Human check required" />
+      <Badge label="Approved" tone="green" detail="Ready for listing" />
+      <Badge label="Listed" tone="lime" />
+      <Badge label="Demo only" tone="yellow" />
+      <Badge label="Closed" tone="ink" />
+    </div>
+  </section>
+
+  <section class="section shell preview-section" aria-labelledby="tiles-title">
+    <h2 id="tiles-title">Action tiles</h2>
+    <div class="preview-tiles">
+      <ActionTile label="Action A" tone="blue" />
+      <ActionTile label="Action B" tone="pink" />
+      <ActionTile label="Action C" tone="lime" />
+      <ActionTile href="#buttons-title" label="Linked action" tone="yellow" />
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .preview-section { padding-block: var(--space-5); }
+  .preview-section h2 { font-family: var(--font-impact); font-size: 1.15rem; text-transform: uppercase; }
+  .preview-buttons, .preview-badges { align-items: start; display: flex; flex-wrap: wrap; gap: var(--space-3); }
+  .preview-tiles { display: grid; gap: var(--space-3); grid-template-columns: repeat(2, minmax(0, 1fr)); }
+</style>

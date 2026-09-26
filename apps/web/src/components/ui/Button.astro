@@ -1,0 +1,44 @@
+---
+import './ui.css';
+
+type Tone = 'blue' | 'pink' | 'yellow' | 'ink';
+type Variant = 'primary' | 'secondary';
+
+interface Props {
+  href?: string;
+  tone?: Tone;
+  variant?: Variant;
+  type?: 'button' | 'submit' | 'reset';
+  disabled?: boolean;
+  fullWidth?: boolean;
+  target?: string;
+  rel?: string;
+  'class'?: string;
+}
+
+const {
+  href,
+  tone = 'yellow',
+  variant = 'primary',
+  type = 'button',
+  disabled = false,
+  fullWidth = false,
+  target,
+  rel,
+  class: extraClass = '',
+} = Astro.props;
+
+const classes = [
+  'rd-ui-button',
+  `rd-ui-button--${tone}`,
+  `rd-ui-button--${variant}`,
+  fullWidth && 'rd-ui-button--full',
+  extraClass,
+].filter(Boolean).join(' ');
+---
+
+{href && !disabled ? (
+  <a class={classes} href={href} target={target} rel={rel}><slot /></a>
+) : (
+  <button class={classes} type={type} disabled={disabled}><slot /></button>
+)}

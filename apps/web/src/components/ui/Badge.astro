@@ -1,0 +1,26 @@
+---
+import './ui.css';
+
+type Tone = 'blue' | 'pink' | 'yellow' | 'lime' | 'green' | 'ink';
+
+interface Props {
+  label: string;
+  detail?: string;
+  tone?: Tone;
+  'class'?: string;
+}
+
+const { label, detail, tone = 'yellow', class: extraClass = '' } = Astro.props;
+const classes = [
+  'rd-ui-badge',
+  `rd-ui-badge--${tone}`,
+  detail && 'rd-ui-badge--detailed',
+  extraClass,
+].filter(Boolean).join(' ');
+---
+
+<span class={classes}>
+  <span class="rd-ui-badge__dot" aria-hidden="true"></span>
+  <strong>{label}</strong>
+  {detail && <small>{detail}</small>}
+</span>

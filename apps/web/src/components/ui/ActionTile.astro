@@ -1,0 +1,41 @@
+---
+import './ui.css';
+
+type Tone = 'blue' | 'pink' | 'yellow' | 'lime';
+
+interface Props {
+  href?: string;
+  label: string;
+  tone?: Tone;
+  active?: boolean;
+  'class'?: string;
+}
+
+const {
+  href,
+  label,
+  tone = 'blue',
+  active = false,
+  class: extraClass = '',
+} = Astro.props;
+const classes = [
+  'rd-ui-action-tile',
+  `rd-ui-action-tile--${tone}`,
+  href && 'rd-ui-action-tile--link',
+  extraClass,
+].filter(Boolean).join(' ');
+const hasIcon = Astro.slots.has('icon');
+const Element = href ? 'a' : 'div';
+---
+
+<Element class={classes} href={href} aria-current={href && active ? 'page' : undefined}>
+  <span class:list={['rd-ui-action-tile__top', hasIcon && 'rd-ui-action-tile__top--has-icon']}>
+    {hasIcon && <span class="rd-ui-action-tile__icon" aria-hidden="true"><slot name="icon" /></span>}
+    {href && <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M5 12h14m-7-7 7 7-7 7" />
+    </svg>}
+  </span>
+  <span class="rd-ui-action-tile__copy">
+    <strong>{label}</strong>
+  </span>
+</Element>
