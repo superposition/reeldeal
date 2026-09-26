@@ -26,7 +26,7 @@ operator-confirmed.
                  ┌─────────────────┐        ┌─────────────────────────┐
                  │ SQLite (WAL)    │        │ Ethereum registry/book  │
                  │ business rows   │        │ hashes + settlement     │
-                 │ + audit history │        │ events; optional ENS    │
+                 │ + audit history │        │ events                  │
                  └─────────────────┘        └─────────────────────────┘
 ```
 
@@ -58,8 +58,7 @@ operator-confirmed.
    transition so two buyers cannot win the same listing.
 5. The chain adapter hashes the observation, decision, and corrections into
    a provenance commitment and records the transaction status. Ethereum
-   stores commitments and settlement events. ENS naming is an optional
-   presentation layer. A chain transaction is never the source of catalog,
+   stores commitments and settlement events. A chain transaction is never the source of catalog,
    image, price, or bid data.
 
 The code owners are `apps/web` for pages and browser capture; `apps/decision`
@@ -79,7 +78,6 @@ encoding. The API consumes the domain contract, not UI component types.
 | Lots, listings, bids, sales, and demo payments | API SQLite rows and domain status machines | Browser marketplace pages |
 | Provenance work queue | API `provenance_records.anchor_status` and transaction hash | Browser provenance panel |
 | Confirmed on-chain commitment and settlement | Ethereum contract state/events | API indexed confirmation and explorer link |
-| Optional human-readable lot name | ENS registry/resolver record once confirmed | API's cached `ens_name` |
 
 `schema.sql` is the SQLite schema authority. `packages/domain` defines the
 accepted JSON shapes and legal state transitions; `docs/contracts.md` records

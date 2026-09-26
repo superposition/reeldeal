@@ -45,7 +45,6 @@ flowchart LR
     I -. correction .-> O
     N --> P[Hash provenance bundle]
     P --> Q[Ethereum anchor]
-    Q --> R[Optional ENS lot name]
 ```
 
 The chain is used for the narrow question it answers well: who committed to a
