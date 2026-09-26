@@ -1,7 +1,7 @@
 import type { Database } from 'bun:sqlite';
 import { z } from 'zod';
 import {
-  GATE, ObservationInputSchema, TypedDecisionInputSchema, gate, lotMachine,
+  GATE, ObservationInputSchema, TypedDecisionInputSchema, fishScanMachine, gate, lotMachine,
   type ObservationInput, type TypedDecisionInput,
 } from '../../../../packages/domain/src/index';
 import { json } from './stub';
@@ -149,6 +149,9 @@ export async function postLotReview(db: Database, lotId: string, request: Reques
   const result = db.transaction(() => {
     const lot = readLot(db, lotId);
     if (!lot || lot.status !== 'pending_review') return { conflict: true } as const;
+    const scan = db.query('SELECT status FROM fish_scans WHERE id = ? AND org_id = ?')
+      .get(lot.scan_id, lot.org_id) as { status: string } | null;
+    if (scan?.status !== 'decided' && scan?.status !== 'reviewed') return { scanConflict: true } as const;
     const original = originalObservation(lot.observation_payload);
     const decision = TypedDecisionInputSchema.parse(JSON.parse(lot.decision_payload));
     const existing = readCorrections(db, lotId);
@@ -169,6 +172,15 @@ export async function postLotReview(db: Database, lotId: string, request: Reques
     const remainingReason = remaining ?? (answerHold ? 'noul' : null);
     const approved = remainingReason === null;
 
+    if (scan.status === 'decided') {
+      const reviewed = fishScanMachine.transition('decided', 'reviewed');
+      db.query('UPDATE fish_scans SET status = ?, updated_at = ? WHERE id = ?').run(reviewed, at, lot.scan_id);
+      audit(db, {
+        entityType: 'FishScan', entityId: lot.scan_id, orgId: lot.org_id, actorId: correction.actor_id,
+        fromStatus: 'decided', toStatus: reviewed, requestId: correctionId,
+        payload: { lot_id: lot.id, decision_id: lot.decision_id, correction_id: correctionId, human_review: true },
+      }, at);
+    }
     db.query(`INSERT INTO corrections (id,scan_id,lot_id,org_id,field,model_value,human_value,reason,actor_id,status,created_at,updated_at)
       VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`).run(
       correctionId, lot.scan_id, lot.id, lot.org_id, correction.field,
@@ -183,6 +195,13 @@ export async function postLotReview(db: Database, lotId: string, request: Reques
         original_gate: originalGate, remaining_reason: remainingReason, human_attestation: true },
     }, at);
     if (approved) {
+      const promoted = fishScanMachine.transition('reviewed', 'promoted');
+      db.query('UPDATE fish_scans SET status = ?, updated_at = ? WHERE id = ?').run(promoted, at, lot.scan_id);
+      audit(db, {
+        entityType: 'FishScan', entityId: lot.scan_id, orgId: lot.org_id, actorId: correction.actor_id,
+        fromStatus: 'reviewed', toStatus: promoted, requestId: correctionId,
+        payload: { lot_id: lot.id, decision_id: lot.decision_id, correction_id: correctionId, human_approved: true },
+      }, at);
       const status = lotMachine.transition('pending_review', 'approved');
       db.query('UPDATE lots SET status = ?, gate_reason = NULL, updated_at = ? WHERE id = ?')
         .run(status, at, lot.id);
@@ -199,6 +218,7 @@ export async function postLotReview(db: Database, lotId: string, request: Reques
     return { approved, correctionId, review: snapshot(db, readLot(db, lot.id)!) } as const;
   })();
   if ('conflict' in result) return json({ error: 'not_pending_review' }, 409);
+  if ('scanConflict' in result) return json({ error: 'scan_not_reviewable' }, 409);
   if ('unchanged' in result) return json({ error: 'no_change' }, 409);
   return json({ lot: result.review.lot, correction: result.review.corrections.at(-1), review: result.review,
     human_approved: result.approved }, 200);
