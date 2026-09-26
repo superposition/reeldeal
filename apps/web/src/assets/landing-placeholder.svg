@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img" aria-label="Illustrated fish silhouette; no landing photograph">
+  <rect width="800" height="600" fill="#173c43"/>
+  <path d="M0 82H800M0 164H800M0 246H800M0 328H800M0 410H800M0 492H800M96 0V600M192 0V600M288 0V600M384 0V600M480 0V600M576 0V600M672 0V600M768 0V600" stroke="#f8f6eb" stroke-opacity=".09" stroke-width="2"/>
+  <path d="M157 292C254 181 445 171 574 285C624 259 666 223 704 177L692 306L705 433C664 390 622 354 574 329C432 447 251 419 157 292Z" fill="#d8955e" stroke="#f8f6eb" stroke-width="9" stroke-linejoin="round"/>
+  <path d="M259 303C327 289 420 285 537 307" fill="none" stroke="#173c43" stroke-opacity=".45" stroke-width="9" stroke-linecap="round"/>
+  <circle cx="270" cy="261" r="13" fill="#173c43"/>
+  <path d="M154 293L103 268M154 293L103 317" stroke="#f8f6eb" stroke-width="9" stroke-linecap="round"/>
+  <rect x="105" y="527" width="338" height="46" rx="4" fill="#102d34"/>
+  <text x="123" y="558" fill="#f8f6eb" font-family="system-ui,sans-serif" font-size="23" font-weight="700">ILLUSTRATION · NO PHOTO</text>
+</svg>
