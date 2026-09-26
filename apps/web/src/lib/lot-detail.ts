@@ -37,7 +37,7 @@ if (root) {
     photo.removeAttribute('srcset');
     photo.src = src;
     photo.alt = 'AI-generated species illustration, not a landing photograph';
-    photo.style.objectFit = 'contain';
+    photo.closest<HTMLElement>('.market-detail__media')!.dataset.reference = 'true';
     set('[data-photo-caption]', 'AI-generated illustration, not a photograph of this lot.');
     const caption = root?.querySelector<HTMLElement>('[data-photo-caption]');
     if (caption) caption.hidden = false;
@@ -98,6 +98,7 @@ if (root) {
       photo.closest('picture')?.querySelectorAll('source').forEach((source) => source.remove());
       photo.removeAttribute('srcset');
       photo.src = observation.image_ref;
+      photo.closest<HTMLElement>('.market-detail__media')!.dataset.reference = 'false';
       photo.alt = `Landing photograph for ${facts.species_label ?? 'this lot'}`;
       set('[data-photo-caption]', 'Landing photo submitted with this scan.');
       const caption = root?.querySelector<HTMLElement>('[data-photo-caption]');

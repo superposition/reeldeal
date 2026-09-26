@@ -28,6 +28,8 @@ const observation = detail?.observation;
 const decision = detail?.typed_decision;
 const corrections = detail?.corrections ?? [];
 const hasPhoto = !!observation && /^data:image\/(?:jpeg|png|webp|avif);base64,[a-z0-9+/=]+$/i.test(observation.image_ref);
+const reference = fish.find((item) => item.slug === facts?.species_label?.toLowerCase());
+const artwork = reference?.image ?? placeholder;
 const decisionAnswer = decision?.kind === 'choice' ? decision.choice ?? 'No answer'
   : decision?.kind === 'score' ? `${Math.round((decision.score ?? 0) * 100)}% recorded score`
     : decision?.kind === 'noul' ? decision.noul_value ? 'Yes' : 'No' : '';
@@ -46,18 +48,18 @@ const checkSummary = detail && (corrections.length > 0
   </div>
 
   <div class="market-detail__content" data-lot-content hidden={!ready}>
-    <div class="market-detail__media">
+    <div class="market-detail__media" data-reference={!hasPhoto}>
       {hasPhoto ? (
         <img src={observation?.image_ref} width="960" height="720" alt={`Landing photograph for ${facts?.species_label ?? 'this lot'}`} data-lot-image />
       ) : (
         <Picture
-          src={placeholder}
+          src={artwork}
           formats={['avif', 'webp']}
           widths={[480, 960]}
           sizes="392px"
           width={960}
-          height={720}
-          alt="Illustrated fish silhouette; no landing photograph"
+          height={Math.round(960 * artwork.height / artwork.width)}
+          alt={reference ? 'AI-generated species illustration, not a landing photograph' : 'Illustrated fish silhouette; no landing photograph'}
           loading="eager"
           data-lot-image
         />
@@ -66,7 +68,7 @@ const checkSummary = detail && (corrections.length > 0
         <span class="rd-ui-badge__dot" aria-hidden="true"></span>
         <strong data-lot-status>{lot ? statusName[lot.status] ?? lot.status : 'Loading'}</strong>
       </span>
-      <p data-photo-caption hidden={!hasPhoto}>Landing photo supplied.</p>
+      <p data-photo-caption hidden={!hasPhoto && !reference}>{hasPhoto ? 'Landing photo supplied.' : 'AI-generated illustration, not a photograph of this lot.'}</p>
     </div>
     <div class="market-detail__copy">
       <p class="market-detail__kicker">ReelDeal / Japan’s east coast</p>
@@ -80,7 +82,7 @@ const checkSummary = detail && (corrections.length > 0
         <span class="rd-ui-badge rd-ui-badge--lime market-detail__signal"><span class="rd-ui-badge__dot" aria-hidden="true"></span><strong data-signal-status>{lot ? statusName[lot.status] ?? lot.status : 'Status loading'}</strong></span>
         <span class="rd-ui-badge rd-ui-badge--blue market-detail__signal"><span class="rd-ui-badge__dot" aria-hidden="true"></span><strong data-signal-species>{facts ? facts.species_confirmed_by ? 'Species confirmed' : 'Species unconfirmed' : 'Species loading'}</strong></span>
         <span class="rd-ui-badge rd-ui-badge--pink market-detail__signal"><span class="rd-ui-badge__dot" aria-hidden="true"></span><strong data-signal-review>{ready ? corrections.length > 0 ? `${corrections.length} human correction${corrections.length === 1 ? '' : 's'}` : lot?.status === 'pending_review' ? 'Review needed' : 'No corrections' : 'Review loading'}</strong></span>
-        <span class="rd-ui-badge rd-ui-badge--yellow market-detail__signal"><span class="rd-ui-badge__dot" aria-hidden="true"></span><strong data-signal-photo>{ready ? hasPhoto ? 'Landing photo' : 'No photo' : 'Photo loading'}</strong></span>
+        <span class="rd-ui-badge rd-ui-badge--yellow market-detail__signal"><span class="rd-ui-badge__dot" aria-hidden="true"></span><strong data-signal-photo>{ready ? hasPhoto ? 'Landing photo' : 'Illustration' : 'Photo loading'}</strong></span>
       </div>
       <div class="market-detail__buy-bar">
         <strong data-lot-price>{lot ? `¥${lot.price_jpy.toLocaleString('ja-JP')}` : ''}</strong>

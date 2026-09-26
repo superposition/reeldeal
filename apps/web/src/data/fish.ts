@@ -29,17 +29,17 @@ export const storefrontLots = fish.map((item) => ({
 
 export const copy = {
   en: {
-    title: 'Fish market', region: 'Japan’s east coast', hero: 'Good fish. Great finds.', lead: 'A little closer to the coast. Meet the fish, explore the market.',
+    title: 'Fish market', region: 'Japan’s east coast', hero: 'From the dock. To your table.', lead: 'Support local fishers. Bring Japan’s Pacific coast catch to more tables.',
     shop: 'Shop the market', all: 'All seafood', fish: 'Whole fish', tuna: 'Tuna & katsuo', shellfish: 'Shellfish', browse: 'Find your fish', collection: 'Meet the catch',
     search: 'Search fish', searchHint: 'Try saba, tuna or サバ', preview: 'Market preview', note: 'Sample lots and prices. Fish images are AI-generated illustrations, not actual lot photos.',
     price: 'Guide price', settlement: 'Settlement: JPYC', details: 'Lot details', weight: 'Weight', length: 'Length', review: 'Review pending', audit: 'No activity recorded for this preview lot.',
-    empty: 'No fish match. Try another search or category.', count: 'species shown', credits: 'Image credits', creditNote: 'The six fish portraits are AI-generated illustrations. The market photograph is credited below.', landingCredit: 'Katsuo landing, Omaezaki',
+    empty: 'No fish match. Try another search or category.', count: 'species shown', credits: 'Image credits', creditNote: 'The seafood portraits and storefront hero are AI-generated illustrations. They do not depict current inventory or a specific supplier.',
   },
   ja: {
-    title: '魚市場', region: '日本の太平洋沿岸', hero: '海のごちそう、見つけよう。', lead: '海をもっと身近に。魚を知って、市場を楽しもう。',
+    title: '魚市場', region: '日本の太平洋沿岸', hero: '港から、食卓へ。', lead: '地域の漁業者を応援。日本の太平洋沿岸の魚を、もっと多くの買い手と食卓へ。',
     shop: '魚を探す', all: 'すべて', fish: '鮮魚', tuna: 'マグロ・カツオ', shellfish: '貝類', browse: '魚を探す', collection: '魚のラインナップ',
     search: '魚を検索', searchHint: 'サバ、マグロ、saba など', preview: '市場プレビュー', note: '魚と価格はデモ用です。魚の画像はAI生成のイメージで、出品物の写真ではありません。',
     price: '参考価格', settlement: '決済通貨：JPYC', details: '商品情報', weight: '重量', length: '全長', review: '確認待ち', audit: 'このプレビュー商品の取引履歴はありません。',
-    empty: '該当する魚がありません。検索語やカテゴリーを変えてください。', count: '種類を表示', credits: '画像クレジット', creditNote: '6種類の魚の画像はAI生成のイメージです。市場の写真のクレジットは以下のとおりです。', landingCredit: '御前崎のカツオ水揚げ',
+    empty: '該当する魚がありません。検索語やカテゴリーを変えてください。', count: '種類を表示', credits: '画像クレジット', creditNote: '魚の画像とトップ画像はAI生成のイメージです。現在の在庫や特定の生産者を撮影したものではありません。',
   },
 } as const;

@@ -49,7 +49,8 @@ if (market) {
     const tones = ['lime', 'pink', 'yellow', 'blue'];
     const tone = listing.status === 'settled' ? 'pink' : tones[index % tones.length];
     const article = element('article', `market-card market-card--${tone}`);
-    const imageWrap = element('div', 'market-card__media');
+    const imageWrap = element('a', 'market-card__media');
+    imageWrap.href = `${base}shop/lot/?id=${encodeURIComponent(listing.lot_id)}`;
     const image = element('img');
     const species = (listing.species_label ?? '').toLowerCase();
     image.src = listing.image_ref ?? images[species] ?? art;
@@ -66,6 +67,7 @@ if (market) {
     badge.append(element('span', 'rd-ui-badge__dot'), element('strong', undefined, listing.demo ? `${availability} ${t.demo}` : availability));
     const factsCopy = element('div', 'market-card__image-facts');
     const title = element('h2', undefined, names[species] ?? listing.species_label ?? t.unknown);
+    imageWrap.setAttribute('aria-label', `${t.view} ${title.textContent}`);
     const weight = listing.weight_g === null ? t.weightUnknown : `${listing.weight_g.toLocaleString('ja-JP')} g`;
     const length = listing.length_mm === null ? t.lengthUnknown : `${listing.length_mm} mm`;
     const facts = element('p');
@@ -76,13 +78,12 @@ if (market) {
     factsCopy.append(title, facts, landed);
     if (!listing.image_ref) factsCopy.append(element('small', undefined, t.sample));
     copy.append(badge, factsCopy);
-    imageWrap.append(copy);
     const foot = element('div', 'market-card__foot');
     foot.append(element('strong', undefined, `¥${listing.price_jpy.toLocaleString('ja-JP')}`));
     const link = element('a', 'rd-ui-button rd-ui-button--ink rd-ui-button--secondary market-card__action', t.view);
-    link.href = `${base}shop/lot/?id=${encodeURIComponent(listing.lot_id)}`;
+    link.href = imageWrap.href;
     foot.append(link);
-    article.append(imageWrap, foot);
+    article.append(imageWrap, copy, foot);
     return article;
   }
 
