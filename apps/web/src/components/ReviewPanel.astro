@@ -1,0 +1,60 @@
+---
+import DecisionCard from './DecisionCard.astro';
+import ReviewForm from './ReviewForm';
+import { gateReasonWords, type ReviewSnapshot } from './review-types';
+
+type Props = { review: ReviewSnapshot; apiOrigin: string; fixture?: boolean };
+const { review, apiOrigin, fixture = false } = Astro.props;
+const originalReason = review.original_gate.route === 'pending_review' ? review.original_gate.reason : null;
+---
+
+<section class="review-panel" aria-labelledby="review-title">
+  <header class="review-panel__heading">
+    <p class="eyebrow">Human review</p>
+    <h2 id="review-title">Review this lot</h2>
+    <p>Original model or rule output stays unchanged. Corrections are attributed, appended, and checked by the server before any human approval.</p>
+    {fixture && <p class="review-panel__fixture">Static preview until a matching lot is loaded from the API.</p>}
+  </header>
+  <aside class="review-panel__banner" aria-label="Original review gate">
+    <strong>REVIEW · original gate</strong>
+    <p>{originalReason ? gateReasonWords[originalReason] ?? originalReason : 'This decision was eligible at creation; check the current lot status.'}</p>
+  </aside>
+  <div class="review-panel__layout">
+    <div class="review-panel__original">
+      <DecisionCard decision={review.original_decision} outcome={review.original_gate} />
+      <section class="review-panel__facts" aria-labelledby="original-facts-title">
+        <h3 id="original-facts-title">Original recorded facts</h3>
+        <dl>
+          <div><dt>Length</dt><dd>{review.original_observation.length_mm ?? 'Not recorded'} mm</dd></div>
+          <div><dt>Weight</dt><dd>{review.original_observation.weight_g ?? 'Not recorded'} g</dd></div>
+          <div><dt>Scale stable</dt><dd>{review.original_observation.scale_reading.stable ? 'Yes' : 'No'}</dd></div>
+          <div><dt>Species</dt><dd>{review.original_observation.species_label ?? 'Not confirmed'}</dd></div>
+        </dl>
+      </section>
+    </div>
+    <div class="review-panel__interaction">
+      <ReviewForm client:load initial={review} apiOrigin={apiOrigin} />
+      <noscript><p class="review-panel__fallback">Enable JavaScript to submit a correction. The original decision and review reason above remain readable without it.</p></noscript>
+    </div>
+  </div>
+</section>
+
+<style>
+  .review-panel { display: grid; gap: var(--space-5); }
+  .review-panel__heading { max-width: 70ch; }
+  .review-panel__heading h2 { margin-bottom: var(--space-3); }
+  .review-panel__heading p { margin-bottom: var(--space-2); }
+  .review-panel__fixture { color: var(--color-accent-deep); font-weight: 700; }
+  .review-panel__banner { padding: var(--space-4); border-inline-start: 5px solid var(--color-accent-deep); background: var(--color-chalk); }
+  .review-panel__banner strong { letter-spacing: .06em; }
+  .review-panel__banner p { margin: var(--space-2) 0 0; }
+  .review-panel__layout { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); gap: var(--space-5); align-items: start; }
+  .review-panel__original, .review-panel__interaction { min-width: 0; }
+  .review-panel__facts { margin-top: var(--space-4); padding: var(--space-4); border: var(--border-hairline); background: var(--color-chalk); }
+  .review-panel__facts h3 { font-size: 1.125rem; }
+  .review-panel__facts dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); margin: 0; }
+  .review-panel__facts dt { color: var(--color-ink-soft); font-size: .875rem; }
+  .review-panel__facts dd { margin: 0; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+  .review-panel__fallback { margin-top: var(--space-3); padding: var(--space-3); border: var(--border-hairline); }
+  @media (max-width: 880px) { .review-panel__layout { grid-template-columns: 1fr; } }
+</style>
