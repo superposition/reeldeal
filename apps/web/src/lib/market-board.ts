@@ -54,7 +54,7 @@ if (market) {
     const image = element('img');
     const species = (listing.species_label ?? '').toLowerCase();
     image.src = listing.image_ref ?? images[species] ?? art;
-    image.alt = listing.image_ref ? t.photoAlt : t.referenceAlt;
+    image.alt = names[species] ?? listing.species_label ?? t.unknown;
     if (!listing.image_ref) article.classList.add('market-card--reference');
     image.width = 480;
     image.height = 360;
