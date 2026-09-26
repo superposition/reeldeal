@@ -4,11 +4,15 @@ import ProvenancePanel from '../../components/ProvenancePanel.astro';
 ---
 
 <BaseLayout
-  title="Provenance"
+  title="Check proof"
   description="Inspect a ReelDeal lot's record hash and Ethereum anchor status."
   section="provenance"
 >
-  <div class="section shell">
+  <div class="proof-page shell">
     <ProvenancePanel />
   </div>
 </BaseLayout>
+
+<style>
+  .proof-page { padding-block: var(--space-3) var(--space-5); }
+</style>

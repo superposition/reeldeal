@@ -1,30 +1,29 @@
 ---
-const apiBase = import.meta.env.PUBLIC_API_BASE_URL ?? '';
+import Button from './ui/Button.astro';
+const apiBase = import.meta.env.PUBLIC_API_ORIGIN ?? import.meta.env.PUBLIC_API_BASE_URL ?? '';
 ---
 
 <section class="provenance-panel" data-provenance-panel data-api-base={apiBase} aria-labelledby="provenance-title">
   <div class="provenance-panel__intro">
     <p class="eyebrow">Lot record</p>
-    <h2 id="provenance-title">Check provenance</h2>
-    <p>Look up the exact record hash and its transaction state. Only a matching chain receipt is shown as confirmed.</p>
+    <h1 id="provenance-title">Check proof</h1>
   </div>
 
   <form data-lookup-form class="provenance-panel__form">
     <label for="provenance-lot-id">Lot ID</label>
     <div class="provenance-panel__input-row">
       <input id="provenance-lot-id" name="lot_id" type="text" maxlength="100" autocomplete="off" required placeholder="Paste a lot ID" />
-      <button type="submit">Check record</button>
+      <Button type="submit" fullWidth class="provenance-panel__submit">Check record</Button>
     </div>
   </form>
 
-  <details data-api-details class="provenance-panel__connection">
+  <details data-api-details class="provenance-panel__connection" hidden={Boolean(apiBase)}>
     <summary>API connection</summary>
     <label for="provenance-api-base">API address</label>
     <input id="provenance-api-base" type="url" inputmode="url" placeholder="https://api.example.com" autocomplete="url" />
-    <p>This is the public Bun API address. The operator signing token is never entered here.</p>
   </details>
 
-  <p class="provenance-panel__message" data-message role="status" aria-live="polite">Enter a lot ID to inspect its record.</p>
+  <p class="provenance-panel__message" data-message role="status" aria-live="polite"></p>
   <div class="provenance-panel__result" data-result hidden>
     <p class="provenance-panel__state" data-state></p>
     <dl data-fields></dl>
@@ -42,8 +41,9 @@ const apiBase = import.meta.env.PUBLIC_API_BASE_URL ?? '';
     const result = panel.querySelector<HTMLElement>('[data-result]');
     const state = panel.querySelector<HTMLElement>('[data-state]');
     const fields = panel.querySelector<HTMLElement>('[data-fields]');
+    const submit = panel.querySelector<HTMLButtonElement>('button[type="submit"]');
 
-    if (form && lotInput && apiInput && apiDetails && message && result && state && fields) {
+    if (form && lotInput && apiInput && apiDetails && message && result && state && fields && submit) {
       let remembered = '';
       try { remembered = localStorage.getItem('reeldeal_api_base') ?? ''; } catch { /* storage is optional */ }
       const localDefault = ['localhost', '127.0.0.1'].includes(location.hostname)
@@ -84,14 +84,16 @@ const apiBase = import.meta.env.PUBLIC_API_BASE_URL ?? '';
         result.hidden = true;
         fields.replaceChildren();
         message.textContent = 'Checking the record…';
+        submit.disabled = true;
+        submit.textContent = 'Checking…';
 
         try {
           const origin = apiOrigin();
           try { localStorage.setItem('reeldeal_api_base', origin); } catch { /* storage is optional */ }
           const url = `${origin}/v1/provenance/${encodeURIComponent(lotId)}`;
           const response = await fetch(url, { signal: AbortSignal.timeout(12_000) });
-          if (response.status === 404) throw new Error('This lot was not found in the connected API.');
-          if (!response.ok) throw new Error('The API could not load this record.');
+          if (response.status === 404) throw new Error('Lot not found. Check the ID and try again.');
+          if (!response.ok) throw new Error('Could not load this record. Try again.');
           const body = await response.json() as {
             current_payload_hash?: string;
             records?: Array<{
@@ -100,26 +102,35 @@ const apiBase = import.meta.env.PUBLIC_API_BASE_URL ?? '';
             }>;
           };
           const latest = body.records?.[0];
-          state.textContent = latest
-            ? ({ confirmed: 'Confirmed on chain', submitted: 'Transaction sent; awaiting confirmation',
-                pending: 'Anchor pending', failed: 'Anchor verification failed' } as Record<string, string>)[latest.anchor_status]
+          const confirmed = latest?.anchor_status === 'confirmed';
+          const currentConfirmed = confirmed && latest.payload_hash === body.current_payload_hash;
+          state.dataset.state = confirmed && !currentConfirmed ? 'stale' : latest?.anchor_status ?? 'pending';
+          state.textContent = confirmed && !currentConfirmed ? 'Earlier version confirmed' : latest
+            ? ({ confirmed: 'Confirmed on chain', submitted: 'Awaiting confirmation',
+                pending: 'Confirmation pending', failed: 'Verification failed' } as Record<string, string>)[latest.anchor_status]
                 ?? 'Anchor status unknown'
-            : 'No anchor transaction has been requested yet';
+            : 'No transaction yet';
           addField('Current record hash', body.current_payload_hash ?? 'Unavailable');
           if (latest) {
-            addField('Anchored record hash', latest.payload_hash);
+            addField(latest.anchor_status === 'confirmed' ? 'Anchored record hash' : 'Stored record hash', latest.payload_hash);
             addField('Chain ID', String(latest.chain_id));
             addField('Transaction', latest.tx_hash ?? 'Not sent');
             if (latest.explorer_url?.startsWith('https://')) addField('Explorer', latest.explorer_url, true);
           }
-          message.textContent = latest?.anchor_status === 'confirmed'
+          message.textContent = currentConfirmed
             ? 'The on-chain event matches this recorded hash.'
-            : 'The displayed status comes from the connected API.';
+            : confirmed ? 'An earlier version is confirmed. The current record still needs confirmation.'
+              : 'This record has not been confirmed on chain.';
           result.hidden = false;
           history.replaceState(null, '', `${location.pathname}?lot_id=${encodeURIComponent(lotId)}`);
         } catch (error) {
-          message.textContent = error instanceof Error ? error.message : 'The record could not be loaded.';
+          message.textContent = error instanceof TypeError ? 'Could not reach the market. Try again.'
+            : error instanceof DOMException && error.name === 'TimeoutError' ? 'The lookup timed out. Try again.'
+              : error instanceof Error ? error.message : 'The record could not be loaded.';
           if (!apiInput.value) apiDetails.open = true;
+        } finally {
+          submit.disabled = false;
+          submit.textContent = 'Check record';
         }
       };
 
@@ -130,58 +141,100 @@ const apiBase = import.meta.env.PUBLIC_API_BASE_URL ?? '';
 </script>
 
 <style>
-  .provenance-panel {
-    display: grid;
-    gap: var(--space-5);
-    padding: var(--space-5);
-    background: var(--color-chalk);
-    border: var(--border-hairline);
+  .provenance-panel { display: grid; gap: var(--space-3); }
+  .provenance-panel [hidden] { display: none; }
+
+  .provenance-panel__intro {
+    padding: var(--space-3);
+    border: 3px solid var(--color-ink);
     border-radius: var(--radius-card);
+    background: var(--color-water);
   }
-
-  .provenance-panel__intro p:last-child,
-  .provenance-panel__connection p { color: var(--color-ink-soft); }
-
+  .provenance-panel__intro .eyebrow {
+    margin: 0;
+    color: var(--color-ink);
+    font-size: .62rem;
+    letter-spacing: .06em;
+  }
+  .provenance-panel__intro h1 {
+    margin: 0;
+    font-family: var(--font-impact);
+    font-size: 1.65rem;
+    letter-spacing: -.05em;
+    text-transform: uppercase;
+  }
   .provenance-panel__form,
-  .provenance-panel__connection { display: grid; gap: var(--space-2); }
-
-  label { font-weight: 700; }
-
-  .provenance-panel__input-row { display: flex; flex-wrap: wrap; gap: var(--space-2); }
-
+  .provenance-panel__connection,
+  .provenance-panel__result {
+    min-width: 0;
+    padding: var(--space-3);
+    border: 3px solid var(--color-ink);
+    border-radius: var(--radius-card);
+    background: #fff;
+    box-shadow: 4px 4px 0 rgb(21 17 15 / 14%);
+  }
+  .provenance-panel__form,
+  .provenance-panel__input-row { display: grid; gap: var(--space-2); }
+  label {
+    display: block;
+    color: var(--color-earth);
+    font-family: var(--font-impact);
+    font-size: .72rem;
+    font-weight: 900;
+    text-transform: uppercase;
+  }
   input {
+    width: 100%;
+    min-width: 0;
     min-height: var(--tap-size);
-    min-width: min(100%, 18rem);
-    flex: 1;
     padding: var(--space-2) var(--space-3);
-    border: var(--border-hairline);
-    border-radius: var(--radius-sm);
+    border: 2px solid var(--color-ink);
+    border-radius: var(--radius-card);
     background: var(--color-paper);
     color: var(--color-ink);
     font: inherit;
-  }
-
-  button {
-    min-height: var(--tap-size);
-    padding: var(--space-2) var(--space-4);
-    border: var(--border-hairline);
-    border-radius: var(--radius-sm);
-    background: var(--color-board);
-    color: var(--color-chalk);
-    font: inherit;
+    font-size: 1rem;
     font-weight: 700;
-    cursor: pointer;
   }
-
-  button:hover { background: var(--color-board-deep); }
-  summary { min-height: var(--tap-size); cursor: pointer; font-weight: 700; }
-  .provenance-panel__connection p { margin: 0; font-size: .875rem; }
-  .provenance-panel__message { margin: 0; }
-  .provenance-panel__state { font-weight: 800; color: var(--color-accent-deep); }
-
-  dl { display: grid; grid-template-columns: minmax(8rem, 1fr) minmax(0, 3fr); gap: var(--space-2) var(--space-4); margin: 0; }
-  dt { font-weight: 700; }
-  dd { margin: 0; overflow-wrap: anywhere; font-family: ui-monospace, monospace; }
-
-  @media (max-width: 600px) { dl { grid-template-columns: 1fr; } }
+  :global(.provenance-panel__submit) {
+    background: var(--color-listed);
+    box-shadow: none;
+  }
+  summary {
+    min-height: var(--tap-size);
+    align-content: center;
+    cursor: pointer;
+    font-weight: 800;
+    font-size: .8rem;
+  }
+  .provenance-panel__connection label { margin-block: var(--space-2); }
+  .provenance-panel__message { margin: 0; color: var(--color-ink-soft); font-size: .8rem; font-weight: 700; }
+  .provenance-panel__message:empty { display: none; }
+  .provenance-panel__state {
+    width: fit-content;
+    max-width: 100%;
+    margin-bottom: var(--space-3);
+    padding: 6px 10px;
+    border: 2px solid var(--color-ink);
+    border-radius: 999px;
+    background: var(--color-accent);
+    font-family: var(--font-impact);
+    font-size: .72rem;
+    font-weight: 900;
+    text-transform: uppercase;
+  }
+  .provenance-panel__state[data-state="confirmed"] { background: var(--color-listed); }
+  .provenance-panel__state[data-state="failed"] { background: var(--color-review); }
+  dl { display: grid; gap: var(--space-1); margin: 0; }
+  dl :global(dt) { margin-top: var(--space-2); font-size: .72rem; font-weight: 800; }
+  dl :global(dd) {
+    min-width: 0;
+    margin: 0;
+    padding-bottom: var(--space-2);
+    overflow-wrap: anywhere;
+    border-bottom: 1px solid var(--color-line);
+    font-family: ui-monospace, monospace;
+    font-size: .72rem;
+  }
+  dl :global(dd:last-child) { padding-bottom: 0; border-bottom: 0; }
 </style>
