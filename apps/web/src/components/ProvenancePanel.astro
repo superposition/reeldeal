@@ -1,0 +1,187 @@
+---
+const apiBase = import.meta.env.PUBLIC_API_BASE_URL ?? '';
+---
+
+<section class="provenance-panel" data-provenance-panel data-api-base={apiBase} aria-labelledby="provenance-title">
+  <div class="provenance-panel__intro">
+    <p class="eyebrow">Lot record</p>
+    <h2 id="provenance-title">Check provenance</h2>
+    <p>Look up the exact record hash and its transaction state. Only a matching chain receipt is shown as confirmed.</p>
+  </div>
+
+  <form data-lookup-form class="provenance-panel__form">
+    <label for="provenance-lot-id">Lot ID</label>
+    <div class="provenance-panel__input-row">
+      <input id="provenance-lot-id" name="lot_id" type="text" maxlength="100" autocomplete="off" required placeholder="Paste a lot ID" />
+      <button type="submit">Check record</button>
+    </div>
+  </form>
+
+  <details data-api-details class="provenance-panel__connection">
+    <summary>API connection</summary>
+    <label for="provenance-api-base">API address</label>
+    <input id="provenance-api-base" type="url" inputmode="url" placeholder="https://api.example.com" autocomplete="url" />
+    <p>This is the public Bun API address. The operator signing token is never entered here.</p>
+  </details>
+
+  <p class="provenance-panel__message" data-message role="status" aria-live="polite">Enter a lot ID to inspect its record.</p>
+  <div class="provenance-panel__result" data-result hidden>
+    <p class="provenance-panel__state" data-state></p>
+    <dl data-fields></dl>
+  </div>
+</section>
+
+<script>
+  const panel = document.querySelector<HTMLElement>('[data-provenance-panel]');
+  if (panel) {
+    const form = panel.querySelector<HTMLFormElement>('[data-lookup-form]');
+    const lotInput = panel.querySelector<HTMLInputElement>('#provenance-lot-id');
+    const apiInput = panel.querySelector<HTMLInputElement>('#provenance-api-base');
+    const apiDetails = panel.querySelector<HTMLDetailsElement>('[data-api-details]');
+    const message = panel.querySelector<HTMLElement>('[data-message]');
+    const result = panel.querySelector<HTMLElement>('[data-result]');
+    const state = panel.querySelector<HTMLElement>('[data-state]');
+    const fields = panel.querySelector<HTMLElement>('[data-fields]');
+
+    if (form && lotInput && apiInput && apiDetails && message && result && state && fields) {
+      let remembered = '';
+      try { remembered = localStorage.getItem('reeldeal_api_base') ?? ''; } catch { /* storage is optional */ }
+      const localDefault = ['localhost', '127.0.0.1'].includes(location.hostname)
+        ? 'http://127.0.0.1:8787' : '';
+      apiInput.value = panel.dataset.apiBase || remembered || localDefault;
+      lotInput.value = new URLSearchParams(location.search).get('lot_id') ?? '';
+      if (!apiInput.value) apiDetails.open = true;
+
+      const addField = (label: string, value: string, link = false) => {
+        const dt = document.createElement('dt');
+        dt.textContent = label;
+        const dd = document.createElement('dd');
+        if (link) {
+          const anchor = document.createElement('a');
+          anchor.href = value;
+          anchor.textContent = 'View transaction';
+          anchor.rel = 'noopener noreferrer';
+          anchor.target = '_blank';
+          dd.append(anchor);
+        } else {
+          dd.textContent = value;
+        }
+        fields.append(dt, dd);
+      };
+
+      const apiOrigin = () => {
+        const url = new URL(apiInput.value.trim());
+        const local = ['localhost', '127.0.0.1'].includes(url.hostname);
+        if (url.protocol !== 'https:' && !(local && url.protocol === 'http:')) {
+          throw new Error('Use an HTTPS API address, or localhost for development.');
+        }
+        return url.origin;
+      };
+
+      const lookup = async () => {
+        const lotId = lotInput.value.trim();
+        if (!lotId) return;
+        result.hidden = true;
+        fields.replaceChildren();
+        message.textContent = 'Checking the record…';
+
+        try {
+          const origin = apiOrigin();
+          try { localStorage.setItem('reeldeal_api_base', origin); } catch { /* storage is optional */ }
+          const url = `${origin}/v1/provenance/${encodeURIComponent(lotId)}`;
+          const response = await fetch(url, { signal: AbortSignal.timeout(12_000) });
+          if (response.status === 404) throw new Error('This lot was not found in the connected API.');
+          if (!response.ok) throw new Error('The API could not load this record.');
+          const body = await response.json() as {
+            current_payload_hash?: string;
+            records?: Array<{
+              payload_hash: string; chain_id: number; anchor_status: string;
+              tx_hash: string | null; explorer_url: string | null;
+            }>;
+          };
+          const latest = body.records?.[0];
+          state.textContent = latest
+            ? ({ confirmed: 'Confirmed on chain', submitted: 'Transaction sent; awaiting confirmation',
+                pending: 'Anchor pending', failed: 'Anchor verification failed' } as Record<string, string>)[latest.anchor_status]
+                ?? 'Anchor status unknown'
+            : 'No anchor transaction has been requested yet';
+          addField('Current record hash', body.current_payload_hash ?? 'Unavailable');
+          if (latest) {
+            addField('Anchored record hash', latest.payload_hash);
+            addField('Chain ID', String(latest.chain_id));
+            addField('Transaction', latest.tx_hash ?? 'Not sent');
+            if (latest.explorer_url?.startsWith('https://')) addField('Explorer', latest.explorer_url, true);
+          }
+          message.textContent = latest?.anchor_status === 'confirmed'
+            ? 'The on-chain event matches this recorded hash.'
+            : 'The displayed status comes from the connected API.';
+          result.hidden = false;
+          history.replaceState(null, '', `${location.pathname}?lot_id=${encodeURIComponent(lotId)}`);
+        } catch (error) {
+          message.textContent = error instanceof Error ? error.message : 'The record could not be loaded.';
+          if (!apiInput.value) apiDetails.open = true;
+        }
+      };
+
+      form.addEventListener('submit', (event) => { event.preventDefault(); void lookup(); });
+      if (lotInput.value && apiInput.value) void lookup();
+    }
+  }
+</script>
+
+<style>
+  .provenance-panel {
+    display: grid;
+    gap: var(--space-5);
+    padding: var(--space-5);
+    background: var(--color-chalk);
+    border: var(--border-hairline);
+    border-radius: var(--radius-card);
+  }
+
+  .provenance-panel__intro p:last-child,
+  .provenance-panel__connection p { color: var(--color-ink-soft); }
+
+  .provenance-panel__form,
+  .provenance-panel__connection { display: grid; gap: var(--space-2); }
+
+  label { font-weight: 700; }
+
+  .provenance-panel__input-row { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+
+  input {
+    min-height: var(--tap-size);
+    min-width: min(100%, 18rem);
+    flex: 1;
+    padding: var(--space-2) var(--space-3);
+    border: var(--border-hairline);
+    border-radius: var(--radius-sm);
+    background: var(--color-paper);
+    color: var(--color-ink);
+    font: inherit;
+  }
+
+  button {
+    min-height: var(--tap-size);
+    padding: var(--space-2) var(--space-4);
+    border: var(--border-hairline);
+    border-radius: var(--radius-sm);
+    background: var(--color-board);
+    color: var(--color-chalk);
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  button:hover { background: var(--color-board-deep); }
+  summary { min-height: var(--tap-size); cursor: pointer; font-weight: 700; }
+  .provenance-panel__connection p { margin: 0; font-size: .875rem; }
+  .provenance-panel__message { margin: 0; }
+  .provenance-panel__state { font-weight: 800; color: var(--color-accent-deep); }
+
+  dl { display: grid; grid-template-columns: minmax(8rem, 1fr) minmax(0, 3fr); gap: var(--space-2) var(--space-4); margin: 0; }
+  dt { font-weight: 700; }
+  dd { margin: 0; overflow-wrap: anywhere; font-family: ui-monospace, monospace; }
+
+  @media (max-width: 600px) { dl { grid-template-columns: 1fr; } }
+</style>
