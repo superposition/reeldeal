@@ -1,6 +1,7 @@
 import { previewLots } from '../data/preview-lots';
 
 export type Detail = {
+  listing?: { id: string; status: string; price_jpy: number } | null;
   lot: { id: string; species_label: string | null; weight_g: number | null; price_jpy: number; status: string; gate_reason: string | null };
   effective_facts: { species_label: string | null; species_confirmed_by: string | null; length_mm: number | null; weight_g: number | null; human_corrected: boolean };
   observation: { length_mm: number | null; captured_at: string; image_ref: string };
@@ -22,6 +23,7 @@ if (root) {
   const recovery = root.querySelector<HTMLElement>('[data-lot-recovery]');
   const content = root.querySelector<HTMLElement>('[data-lot-content]');
   const evidence = root.querySelector<HTMLElement>('[data-lot-evidence]');
+  const bidding = root.querySelector<HTMLElement>('[data-lot-bidding]');
   const evidenceAction = root.querySelector<HTMLAnchorElement>('[data-evidence-action] a');
   const proofDetails = root.querySelector<HTMLDetailsElement>('#lot-evidence');
   const set = (selector: string, value: string) => {
@@ -43,6 +45,7 @@ if (root) {
     if (caption) caption.hidden = false;
   }
   const showUnavailable = (text: string) => {
+    if (bidding) bidding.hidden = true;
     if (message) {
       message.textContent = text;
       message.dataset.error = 'true';
@@ -51,6 +54,7 @@ if (root) {
   };
 
   function showPreview(lotId: string): boolean {
+    if (bidding) bidding.hidden = true;
     const preview = previewLots.find((lot) => lot.id === lotId);
     if (!preview) return false;
     showReference(preview.species);
@@ -145,6 +149,7 @@ if (root) {
       }
     }
     if (content) content.hidden = false;
+    if (bidding) bidding.hidden = detail.listing?.status !== 'open';
     if (evidence) evidence.hidden = false;
     if (message) message.textContent = '';
     if (recovery) recovery.hidden = true;

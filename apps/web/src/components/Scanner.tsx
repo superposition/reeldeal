@@ -1,16 +1,9 @@
 import { createSignal, onCleanup, onMount, Show } from 'solid-js';
+import type { Observation } from '@reeldeal/domain';
 import './Scanner.css';
 
-type SavedObservation = {
-  id: string;
-  scan_id: string;
-  captured_at: string;
-  length_mm: number | null;
-  weight_g: number | null;
-};
-
 type SaveResponse = {
-  observation: SavedObservation;
+  observation: Observation;
   replayed: boolean;
   replaced: boolean;
 };
@@ -18,9 +11,14 @@ type SaveResponse = {
 const LAST_SCAN_KEY = 'reeldeal:last-scan-id';
 const ACTIVE_SCAN_KEY = 'reeldeal:active-scan-id';
 
-export default function Scanner(props: { apiOrigin: string }) {
+export default function Scanner(props: {
+  apiOrigin: string;
+  onSaved?: (observation: Observation) => void;
+  onNewLanding?: () => void;
+}) {
   let video!: HTMLVideoElement;
   let stream: MediaStream | undefined;
+  let restoreGeneration = 0;
   const [camera, setCamera] = createSignal<'idle' | 'starting' | 'ready' | 'unavailable'>('idle');
   const [cameraMessage, setCameraMessage] = createSignal('Camera off. Start it when you are ready.');
   const [imageRef, setImageRef] = createSignal<string | null>(null);
@@ -33,11 +31,12 @@ export default function Scanner(props: { apiOrigin: string }) {
   const [errors, setErrors] = createSignal<Record<string, string>>({});
   const [saving, setSaving] = createSignal(false);
   const [saveMessage, setSaveMessage] = createSignal('');
-  const [lastSaved, setLastSaved] = createSignal<SavedObservation | null>(null);
+  const [lastSaved, setLastSaved] = createSignal<Observation | null>(null);
   const [lastSavedMessage, setLastSavedMessage] = createSignal('');
   const api = props.apiOrigin.replace(/\/$/, '');
 
   onMount(() => {
+    const restoreToken = restoreGeneration;
     const activeId = localStorage.getItem(ACTIVE_SCAN_KEY);
     if (activeId) setScanId(activeId);
     const previousId = activeId ?? localStorage.getItem(LAST_SCAN_KEY);
@@ -49,10 +48,12 @@ export default function Scanner(props: { apiOrigin: string }) {
     void fetch(`${api}/v1/observations/${encodeURIComponent(previousId)}`)
       .then(async (response) => {
         if (!response.ok) throw new Error('The saved landing could not be loaded.');
-        const body = await response.json() as { observation: SavedObservation };
+        const body = await response.json() as { observation: Observation };
+        if (restoreToken !== restoreGeneration) return;
         setLastSaved(body.observation);
+        props.onSaved?.(body.observation);
       })
-      .catch(() => setLastSavedMessage('A previous landing is stored on this device, but it could not be loaded. Try again when the market is connected.'));
+      .catch(() => { if (restoreToken === restoreGeneration) setLastSavedMessage('A previous landing is stored on this device, but it could not be loaded. Try again when the market is connected.'); });
   });
 
   onCleanup(() => {
@@ -174,6 +175,7 @@ export default function Scanner(props: { apiOrigin: string }) {
       localStorage.setItem(LAST_SCAN_KEY, body.observation.scan_id);
       localStorage.removeItem(ACTIVE_SCAN_KEY);
       setLastSaved(body.observation);
+      props.onSaved?.(body.observation);
       setLastSavedMessage('');
       setSaveMessage(body.replayed
         ? 'Already saved. No duplicate landing was created.'
@@ -191,7 +193,10 @@ export default function Scanner(props: { apiOrigin: string }) {
   }
 
   function newLanding() {
+    restoreGeneration++;
+    props.onNewLanding?.();
     localStorage.removeItem(ACTIVE_SCAN_KEY);
+    localStorage.removeItem(LAST_SCAN_KEY);
     setImageRef(null);
     setCapturedAt(null);
     setScanId(null);
@@ -200,6 +205,8 @@ export default function Scanner(props: { apiOrigin: string }) {
     setSpeciesLabel('');
     setOperatorId('');
     setErrors({});
+    setLastSaved(null);
+    setLastSavedMessage('');
     setSaveMessage('Ready for a new landing. Take a photo to begin.');
   }
 
@@ -265,7 +272,7 @@ export default function Scanner(props: { apiOrigin: string }) {
             <button type="submit" class="scanner__button" disabled={saving() || !imageRef() || !api}>
               {saving() ? 'Saving…' : 'Save landing'}
             </button>
-            <button type="button" class="scanner__button scanner__button--secondary" onClick={newLanding}>New landing</button>
+            <button type="button" class="scanner__button scanner__button--secondary" onClick={newLanding} disabled={saving()}>New landing</button>
           </div>
           <Show when={!api}><p class="scanner__error" role="status">The market connection is unavailable. Saving is off for now.</p></Show>
           <p class="scanner__status" role="status" aria-live="polite">{saveMessage()}</p>

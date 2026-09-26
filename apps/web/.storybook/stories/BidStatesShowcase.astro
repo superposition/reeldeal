@@ -1,0 +1,67 @@
+---
+import BaseLayout from '../../src/layouts/BaseLayout.astro';
+
+type BidState = 'closed' | 'offer' | 'cancelled' | 'received' | 'bidding_closed';
+const { state = 'closed' } = Astro.props as { state?: BidState };
+const isOpen = state !== 'closed';
+const hasForm = state === 'offer' || state === 'cancelled';
+---
+
+<BaseLayout title="Demo bid" description="Visual references for ReelDeal demo bid states." section="shop">
+  <section class="bid-showcase" aria-label="Demo bid visual reference">
+    <p class="bid-showcase__eyebrow">Market / Demo lot</p>
+    <h1>Kesennuma sanma</h1>
+    <p class="bid-showcase__lot">Synthetic demo lot · ¥2,400 asking</p>
+    <p class="bid-showcase__note">Visual reference only · no wallet or market connection</p>
+
+    <section class="bid-panel" aria-label="Demo bid state">
+      <span class="bid-panel__open bid-showcase__inert-action">{isOpen ? 'Close bid' : 'Place demo bid'}</span>
+      {isOpen && <div class="bid-panel__body">
+        <div class="bid-panel__heading">
+          <span class="bid-panel__tag">Demo only</span>
+          <h2>Make an offer</h2>
+          <p>Sign an offer in your wallet. No payment or gas is sent.</p>
+        </div>
+
+        {hasForm && <>
+          <div class="bid-panel__ask"><span>Asking</span><strong>¥2,400</strong></div>
+          <div class="bid-showcase__form">
+            <span class="bid-showcase__label">Your offer · JPY</span>
+            <div class="bid-panel__amount"><span aria-hidden="true">¥</span><output>2400</output></div>
+            <p class="bid-panel__hint">Whole yen. A signature records intent, not a purchase.</p>
+            <div class="bid-panel__wallet">
+              <span>Wallet</span>
+              <strong>{state === 'cancelled' ? '0x0000…0001' : 'Not connected'}</strong>
+            </div>
+            {state === 'cancelled' && <p class="bid-panel__error">Cancelled in your wallet. Your offer is still here.</p>}
+            {state === 'offer' && <span class="bid-panel__secondary bid-showcase__inert-action">Connect wallet</span>}
+            <span class:list={['bid-panel__submit', 'bid-showcase__inert-action', { 'bid-showcase__disabled': state === 'offer' }]}>Sign demo offer</span>
+          </div>
+        </>}
+
+        {state === 'received' && <div class="bid-panel__success">
+          <strong>Offer received</strong>
+          <p>Sample: ¥2,400 from 0x0000…0001. The signature is recorded; no payment was made.</p>
+        </div>}
+
+        {state === 'bidding_closed' && <>
+          <p class="bid-panel__error">Bidding is closed for this lot.</p>
+          <span class="bid-panel__secondary bid-showcase__inert-action">Check lot again</span>
+        </>}
+      </div>}
+    </section>
+  </section>
+</BaseLayout>
+
+<style>
+  .bid-showcase { width: min(calc(100% - 28px), 420px); margin-inline: auto; padding: var(--space-6) 0 var(--space-8); }
+  .bid-showcase__eyebrow { margin: 0 0 var(--space-1); color: var(--color-earth); font-family: var(--font-impact); font-size: .7rem; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
+  .bid-showcase h1 { margin: 0; font-family: var(--font-impact); font-size: clamp(1.65rem, 8vw, 2.15rem); letter-spacing: -.04em; line-height: 1; text-transform: uppercase; }
+  .bid-showcase__lot { margin: var(--space-2) 0 var(--space-4); font-size: .83rem; font-weight: 800; }
+  .bid-showcase__note { margin: 0 0 var(--space-5); padding: var(--space-2) var(--space-3); border-left: 3px solid var(--color-ink); background: var(--color-cream); font-size: .72rem; line-height: 1.4; }
+  .bid-showcase__form { display: grid; gap: var(--space-3); }
+  .bid-showcase__label { font-family: var(--font-impact); font-size: .78rem; font-weight: 900; text-transform: uppercase; }
+  .bid-panel__amount output { font-size: 1rem; font-weight: 900; font-variant-numeric: tabular-nums; }
+  .bid-showcase__inert-action { cursor: default; user-select: none; }
+  .bid-showcase__disabled { opacity: .48; }
+</style>

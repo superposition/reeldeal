@@ -60,10 +60,19 @@ forge test --root contracts # optional
 The smoke test writes **additional synthetic records to that local database**.
 It prints `health: {"ok":true,"db":"up","backends":{"decision":"stub"}}`,
 then a published listing, `missing weight: pending_review → publish 409
-(noul)`, and `SMOKE OK`. It is not a production-safe write test: do not point
-it at the shared Railway API. The current checkout passed 68 Bun tests, nine
+(noul)`, two signed offers, rejected tampering/replay, and `SMOKE OK`.
+Accept/pay are explicitly skipped when no seller token is supplied. This
+write smoke refuses non-local API hosts. The current checkout passed 91 Bun tests, nine
 Astro static pages, and six Forge tests; see the ticket handoff for exact run
 evidence. Do not use personal landing data in this demo.
+
+For the complete acceptance/settlement check, run `bun run smoke:local`.
+It starts a disposable loopback-only API with a temporary SQLite database and
+an in-memory operator token, races two signed test offers, verifies exactly
+one sale, records an explicitly unverified synthetic settlement reference,
+then stops its API. Expected: `one 201 + one 409`, `SMOKE OK`, and
+`one-sale database invariant: OK`. It prints the temporary database path for
+inspection, never the operator token. No wallet funds or public records are used.
 
 Storybook is available at `http://localhost:6007/` with
 `bun run --cwd apps/web storybook`. That command **builds static stories, then
@@ -98,9 +107,9 @@ flowchart LR
     I --> J
 
     J --> K[Marketplace listing]
-    K -. planned .-> L[Buyer signs EIP-712 bid]
-    L -. planned .-> M[Seller accepts one winner]
-    M -. planned .-> N[Demo sale]
+    K --> L[Buyer signs EIP-712 bid]
+    L --> M[Operator API accepts one winner<br/>server-only token]
+    M --> N[Demo sale<br/>unverified settlement reference]
 
     C -. audit trail .-> O[(Bun API + SQLite)]
     G -. model metadata .-> O
@@ -142,8 +151,13 @@ grade or species classifier.
 ## Remaining demo gates and attribution
 
 A real camera capture and cross-session scan-to-listing demonstration still
-need runtime proof. Signed bids, seller acceptance, and demo settlement remain
-pending routes; the diagram marks that planned path. Chain anchoring needs a funded signer, RPC, verified
+need runtime proof. Signed offers are implemented and verified with test-key
+browser fixtures; a real two-wallet playtest remains pending. Seller acceptance
+and demo settlement are implemented as operator-only API actions, not a seller
+sign-in or an on-chain payment. Their `REELDEAL_SELLER_TOKEN` stays on the server;
+missing configuration disables these actions and no token is bundled in Pages.
+The bid domain uses `PUBLIC_CHAIN_ID` in the web build and `REELDEAL_CHAIN_ID`
+in the API (both default to 1 and must match). Chain anchoring needs a funded signer, RPC, verified
 receipt, contract addresses, and explorer links; the local Forge simulation
 is not an on-chain transaction. The final video and submission are pending.
 The shared demo API has no seller authentication on ordinary write routes;
