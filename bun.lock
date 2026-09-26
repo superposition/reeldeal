@@ -32,6 +32,9 @@
     },
     "packages/domain": {
       "name": "@reeldeal/domain",
+      "dependencies": {
+        "zod": "^4.6.5",
+      },
     },
   },
   "packages": {
