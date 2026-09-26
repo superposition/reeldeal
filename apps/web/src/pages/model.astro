@@ -1,0 +1,32 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ModelLab from '../components/ModelLab';
+---
+
+<BaseLayout title="Browser decision model" description="Inspect the pinned, browser-only Laya model and its explicit rule-based fallback.">
+  <section class="section shell model-page">
+    <p class="eyebrow">Browser decision backend</p>
+    <h1>Laya runs here, on your device.</h1>
+    <p class="model-page__lead">The 291 MB model is downloaded only when you ask. The weight file and ONNX graph are checked against pinned SHA-256 hashes before inference. No image or landing facts are sent to an AI server.</p>
+    <p>This typed checkpoint was not trained or validated on fish. Its sample answer is a workflow demonstration, not a species, quality, or price claim. An operator must review every decision before a lot is listed.</p>
+    <ModelLab client:load />
+  </section>
+</BaseLayout>
+
+<style>
+  .model-page { padding-block: var(--space-8); }
+  .model-page h1 { max-width: 16ch; }
+  .model-page__lead { max-width: 75ch; font-size: 1.2rem; }
+  .model-page > p { max-width: 75ch; }
+  :global(.model-lab) { margin-top: var(--space-7); padding: var(--space-5); border: var(--border-hairline); border-radius: var(--radius-card); background: var(--color-chalk); }
+  :global(.model-lab__facts p) { margin-bottom: var(--space-2); overflow-wrap: anywhere; }
+  :global(.model-lab__actions) { display: flex; flex-wrap: wrap; gap: var(--space-3); margin-block: var(--space-5); }
+  :global(.model-lab__actions button) { min-height: var(--tap-size); padding: var(--space-2) var(--space-4); border: 1px solid var(--color-board); border-radius: var(--radius-sm); background: var(--color-board); color: var(--color-chalk); font: inherit; font-weight: 700; cursor: pointer; }
+  :global(.model-lab__actions button:disabled) { opacity: .45; cursor: not-allowed; }
+  :global(.model-lab__status) { font-weight: 700; }
+  :global(.model-lab__error) { color: #8b2f26; }
+  :global(.model-lab__result) { border-top: var(--border-hairline); padding-top: var(--space-5); }
+  :global(.model-lab__result dl) { display: grid; grid-template-columns: max-content 1fr; gap: var(--space-2) var(--space-4); }
+  :global(.model-lab__result dt) { font-weight: 700; }
+  :global(.model-lab__result dd) { margin: 0; }
+</style>
