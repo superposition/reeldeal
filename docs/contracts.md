@@ -116,7 +116,7 @@ All bodies and responses are JSON. Shared schemas validate at the API boundary. 
 | `GET /v1/audit?entity=&id=` | `200 {events:[...]}` | Append-only actor, state change, outcome, and timestamp trail. |
 | `POST /v1/orgs`, `GET /v1/orgs/:slug` | Minimal organization payload → `201 {organization}` / `200 {organization}` | Organization ID/slug validation; no production account claims. |
 
-The signed bid uses one shared EIP-712 definition: `Bid { listing_id:string, amount_jpy:uint256, bidder:address, nonce:uint256 }`, domain `{name:"ReelDeel",version:"1",chainId}`. The buyer wallet signs in the browser; the API verifies with `verifyTypedData`. The contract concerns the bid statement and its verification, not which wallet UI or chain RPC provider supplies it. The `bids_listing_nonce` unique index is the final replay guard.
+The signed bid uses one shared EIP-712 definition: `Bid { listing_id:string, amount_jpy:uint256, bidder:address, nonce:uint256 }`, domain `{name:"ReelDeal",version:"1",chainId}`. The buyer wallet signs in the browser; the API verifies with `verifyTypedData`. The contract concerns the bid statement and its verification, not which wallet UI or chain RPC provider supplies it. The `bids_listing_nonce` unique index is the final replay guard.
 
 ## Transition ownership and storage portability
 

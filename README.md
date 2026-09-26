@@ -8,6 +8,13 @@ sale can be anchored on Ethereum for tamper-evident provenance.
 No hosted model or paid AI API is required. The real decision backend is Laya
 ONNX in the browser, with a deterministic local stub as the offline fallback.
 
+The [GitHub Pages preview](https://superposition.github.io/reeldeal/) currently
+shows static board and shop routes with clearly marked sample lots. Capture,
+review, bidding, and chain anchoring are still being built; the preview does
+not claim those flows work yet. Pushes to `main` build the Astro site with Bun
+and publish `apps/web/dist` through GitHub Actions. The Bun API and SQLite do
+not run on GitHub Pages and need a separate runtime for the live demo.
+
 ## Planned demo flow
 
 ```mermaid
@@ -23,7 +30,7 @@ flowchart LR
         F --> G
     end
 
-    G --> H{Confidence gate}
+    G --> H{API confidence gate}
     H -->|Uncertain or missing facts| I[Human review<br/>model and correction both kept]
     H -->|Confident| J[Approved lot]
     I --> J
