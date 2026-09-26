@@ -11,6 +11,9 @@
     },
     "apps/api": {
       "name": "@reeldeal/api",
+      "dependencies": {
+        "zod": "^4.6.5",
+      },
     },
     "apps/decision": {
       "name": "@reeldeal/decision-app",

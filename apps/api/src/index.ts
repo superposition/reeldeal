@@ -7,6 +7,7 @@ import { lotRoutes } from './routes/lots';
 import { observationRoutes } from './routes/observations';
 import { orgRoutes } from './routes/orgs';
 import { provenanceRoutes } from './routes/provenance';
+import { logHandler, logRoutes } from './routes/request-log';
 import { saleRoutes } from './routes/sales';
 import { json, options } from './routes/stub';
 
@@ -18,7 +19,7 @@ if (!Number.isInteger(port) || port < 0 || port > 65535) {
 const server = Bun.serve({
   hostname: process.env.HOST ?? '0.0.0.0',
   port,
-  routes: {
+  routes: logRoutes({
     '/v1/health': {
       GET: () => {
         try {
@@ -39,8 +40,8 @@ const server = Bun.serve({
     ...provenanceRoutes,
     ...auditRoutes,
     ...orgRoutes,
-  },
-  fetch: () => json({ error: 'not_found' }, 404),
+  }),
+  fetch: logHandler(() => json({ error: 'not_found' }, 404), 'not_found'),
 });
 
 console.log(`ReelDeal API listening on ${server.url}`);

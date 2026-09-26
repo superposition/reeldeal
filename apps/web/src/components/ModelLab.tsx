@@ -34,8 +34,8 @@ export default function ModelLab() {
     setError('');
     if (!('serviceWorker' in navigator)) { setError('This browser does not support service workers. Laya can try one WASM thread.'); return; }
     try {
-      const base = import.meta.env.BASE_URL.endsWith('/')
-        ? import.meta.env.BASE_URL : `${import.meta.env.BASE_URL}/`;
+      const configuredBase = import.meta.env.BASE_URL ?? '/';
+      const base = configuredBase.endsWith('/') ? configuredBase : `${configuredBase}/`;
       await navigator.serviceWorker.register(`${base}coi-sw.js`, { scope: base });
       await navigator.serviceWorker.ready;
       // GitHub Pages cannot set these headers itself. The vendored service worker

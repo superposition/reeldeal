@@ -56,8 +56,8 @@ export class BrowserLayaBackend implements DecisionBackend {
 
   async load(onProgress?: (value: ModelProgress) => void): Promise<ModelReady> {
     if (this.ready) return this.ready;
-    const base = import.meta.env.BASE_URL.endsWith('/')
-      ? import.meta.env.BASE_URL : `${import.meta.env.BASE_URL}/`;
+    const configuredBase = import.meta.env.BASE_URL ?? '/';
+    const base = configuredBase.endsWith('/') ? configuredBase : `${configuredBase}/`;
     const reply = await this.request({ type: 'load', wasmBase: `${base}vendor/` }, onProgress);
     if (reply.type !== 'loaded') throw new Error('Unexpected Laya load reply');
     this.ready = reply.ready;

@@ -1,13 +1,15 @@
 import { json } from './stub';
 
-type Handler = (request: Request) => Response | Promise<Response>;
+// Bun route handlers may require typed path params. Keep their public signatures
+// while wrapping them for logging, rather than widening every route to Request.
+type Handler = (...args: any[]) => Response | Promise<Response>;
 type Routes = Record<string, Record<string, Handler>>;
 type LogLine = (line: string) => void;
 
 const REQUEST_ID = /^[A-Za-z0-9._-]{1,80}$/;
 
-export function logHandler(handler: Handler, route: string, emit: LogLine = console.log): Handler {
-  return async (request) => {
+export function logHandler(handler: Handler, route: string, emit: LogLine = console.log): (request: Request) => Promise<Response> {
+  return async (request: Request) => {
     const supplied = request.headers.get('x-request-id');
     const requestId = supplied && REQUEST_ID.test(supplied) ? supplied : crypto.randomUUID();
     const started = performance.now();
