@@ -1,7 +1,12 @@
 @import '../src/styles/tokens.css';
 @import '../src/styles/global.css';
 @import '../src/components/ui/ui.css';
+@import '../src/styles/market.css';
 
 /* The production layout owns the phone frame; isolated stories need only its canvas. */
 .sb-show-main.sb-main-padded { padding: 20px; }
 #storybook-root { width: min(393px, calc(100vw - 40px)); }
+
+/* Astro's static story renderer leaves <Picture> at a dev-only /@fs URL. */
+.market-card__media { background: url('/story-assets/landing-placeholder.png') center / cover; }
+.market-card__media picture { visibility: hidden; }

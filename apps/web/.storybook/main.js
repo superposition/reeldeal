@@ -4,5 +4,8 @@ export default {
     name: '@storybook-astro/framework',
     options: {},
   },
-  staticDirs: ['../public'],
+  staticDirs: [
+    '../public',
+    { from: '../src/assets', to: '/story-assets' },
+  ],
 };
