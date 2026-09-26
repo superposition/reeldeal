@@ -1,58 +1,11 @@
 ---
-import { getImage } from 'astro:assets';
 import BaseLayout from '../layouts/BaseLayout.astro';
-import MarketCard from './MarketCard.astro';
-import placeholder from '../assets/landing-placeholder.png';
-import { previewLots } from '../data/preview-lots';
-import { fish, type Locale } from '../data/fish';
+import MarketBoard from './MarketBoard.astro';
 import { marketCopy } from '../data/market-copy';
-import '../styles/market.css';
-
+import type { Locale } from '../data/fish';
 const { locale = 'en' } = Astro.props as { locale?: Locale };
 const t = marketCopy[locale];
-const base = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/`;
-const apiOrigin = import.meta.env.PUBLIC_API_ORIGIN ?? import.meta.env.PUBLIC_API_BASE_URL ?? (import.meta.env.DEV ? 'http://127.0.0.1:8787' : '');
-const art = await getImage({ src: placeholder, width: 480, height: 360, format: 'webp' });
-const images = Object.fromEntries(await Promise.all(fish.map(async (item) => [item.slug, (await getImage({ src: item.image, width: 480 })).src])));
-const names = Object.fromEntries(fish.map((item) => [item.slug, locale === 'ja' ? item.ja : item.name]));
 ---
 <BaseLayout title={t.title} description={t.description} section="shop" locale={locale}>
-  <header class="market-head">
-    <div class="shell market-head__line">
-      <div><p class="eyebrow">{t.region}</p><h1>{t.heading}</h1></div>
-      <p class="market-count" data-live-count>{t.count}</p>
-    </div>
-    <div class="shell market-language" aria-label={t.language}>
-      <a href={`${base}shop/`} lang="en" hreflang="en" aria-current={locale === 'en' ? 'page' : undefined}>EN</a>
-      <a href={`${base}ja/shop/`} lang="ja" hreflang="ja" aria-current={locale === 'ja' ? 'page' : undefined}>日本語</a>
-      <span>{t.settlement}</span>
-    </div>
-  </header>
-  <div class="market-main shell" data-market data-api-origin={apiOrigin} data-base={base} data-placeholder={art.src} data-locale={locale} data-fish-images={JSON.stringify(images)} data-fish-names={JSON.stringify(names)}>
-    <p class="market-status" data-market-status role="status" aria-live="polite">{t.initial}</p>
-    <div class="market-grid" data-live-grid hidden></div>
-    <div class="market-grid" data-preview-grid aria-label={t.previewBadge}>
-      {previewLots.map((lot, index) => <MarketCard lot={lot} first={index === 0} index={index} base={base} locale={locale} />)}
-    </div>
-    <p class="market-empty" data-market-empty hidden>{t.empty}</p>
-    <nav class="market-filters" aria-label={t.filter}>
-      <div class="market-filters__row">
-        {(['open', 'settled', 'all'] as const).map((status) => <a class="market-chip" data-filter-kind="status" data-filter-value={status} href={`?status=${status}`}>{t[status]}</a>)}
-        <span class="market-filters__divider" aria-hidden="true"></span>
-        <a class="market-chip" data-filter-kind="category" data-filter-value="all" href="?category=all">{t.allFish}</a>
-        {fish.map((item) => <a class="market-chip" data-filter-kind="category" data-filter-value={item.slug} href={`?category=${item.slug}`}>{locale === 'ja' ? item.ja : item.name}</a>)}
-      </div>
-    </nav>
-    <a class="market-credits-link" href={`${base}${locale === 'ja' ? 'ja/' : ''}#image-credits`}>{t.credits}</a>
-  </div>
+  <MarketBoard locale={locale} />
 </BaseLayout>
-<script>
-  import '../lib/market-board';
-</script>
-<style>
-  .market-language { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; }
-  .market-language a { display: grid; place-items: center; min-height: 44px; min-width: 44px; font-size: .75rem; font-weight: 800; }
-  .market-language a[aria-current="page"] { text-decoration-thickness: 3px; }
-  .market-language span { font-size: .65rem; margin-left: auto; }
-  .market-credits-link { display: inline-flex; align-items: center; min-height: 44px; font-size: .75rem; }
-</style>
