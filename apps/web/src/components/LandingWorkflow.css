@@ -37,6 +37,12 @@
 .landing-workflow__error { margin: 0 0 var(--space-2); font-size: .75rem; font-weight: 750; line-height: 1.35; }
 .landing-workflow__fact { padding: var(--space-2); border: 2px solid var(--color-ink); border-radius: 6px; background: var(--color-cream); }
 .landing-workflow__actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-2); }
+.landing-workflow__primary,
+.landing-workflow__check-options { grid-column: 1 / -1; }
+.landing-workflow__check-options { padding: 0 var(--space-2); border: 2px solid var(--color-ink); border-radius: 6px; background: #fff; }
+.landing-workflow__check-options summary { min-height: var(--tap-size); display: flex; align-items: center; font-size: .72rem; font-weight: 800; cursor: pointer; }
+.landing-workflow__check-options p { margin: 0 0 var(--space-2); font-size: .7rem; font-weight: 700; line-height: 1.35; }
+.landing-workflow__check-options button { width: 100%; margin-bottom: var(--space-2); }
 .landing-workflow__card button,
 .landing-workflow__lot a {
   display: inline-flex;
