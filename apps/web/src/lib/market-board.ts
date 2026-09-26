@@ -22,7 +22,7 @@ if (market) {
     const kind = chip.dataset.filterKind!;
     const value = chip.dataset.filterValue!;
     const link = new URL(location.href);
-    if (value === 'all') link.searchParams.delete(kind);
+    if (value === 'all' && kind === 'category') link.searchParams.delete(kind);
     else link.searchParams.set(kind, value);
     chip.href = `${link.pathname}${link.search}`;
     chip.setAttribute('aria-current', (kind === 'status' ? selectedStatus : selectedCategory) === value ? 'true' : 'false');

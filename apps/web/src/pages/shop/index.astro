@@ -1,51 +1,8 @@
 ---
-import { getImage } from 'astro:assets';
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import MarketCard from '../../components/MarketCard.astro';
-import placeholder from '../../assets/landing-placeholder.png';
-import { previewLots } from '../../data/preview-lots';
-import '../../styles/market.css';
-
-const base = import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL : `${import.meta.env.BASE_URL}/`;
-const apiOrigin = import.meta.env.PUBLIC_API_ORIGIN
-  ?? import.meta.env.PUBLIC_API_BASE_URL
-  ?? (import.meta.env.DEV ? 'http://127.0.0.1:8787' : '');
-const art = await getImage({ src: placeholder, width: 480, height: 360, format: 'webp' });
+import MarketBoard from '../../components/MarketBoard.astro';
 ---
 
 <BaseLayout title="Shop" description="Browse Kesennuma demo market lots." section="shop">
-  <header class="market-head">
-    <div class="shell market-head__line">
-      <div>
-        <p class="eyebrow">Kesennuma fish market</p>
-        <h1>Today’s lots</h1>
-      </div>
-      <p class="market-count" data-live-count>Live count unavailable</p>
-    </div>
-  </header>
-
-  <div class="market-main shell" data-market data-api-origin={apiOrigin} data-base={base} data-placeholder={art.src}>
-    <p class="market-status" data-market-status role="status" aria-live="polite">Preview lots are shown until the market connects.</p>
-    <div class="market-grid" data-live-grid hidden></div>
-    <div class="market-grid" data-preview-grid aria-label="Clearly marked preview lots">
-      {previewLots.map((lot, index) => <MarketCard lot={lot} first={index === 0} index={index} base={base} />)}
-    </div>
-    <p class="market-empty" data-market-empty hidden>No lots match those filters. Try another fish or availability.</p>
-    <nav class="market-filters" aria-label="Filter market lots by availability and fish">
-      <div class="market-filters__row">
-        <a class="market-chip" data-filter-kind="status" data-filter-value="open" href="?status=open">Open</a>
-        <a class="market-chip" data-filter-kind="status" data-filter-value="settled" href="?status=settled">Sold</a>
-        <a class="market-chip" data-filter-kind="status" data-filter-value="all" href="?status=all">All lots</a>
-        <span class="market-filters__divider" aria-hidden="true"></span>
-        <a class="market-chip" data-filter-kind="category" data-filter-value="all" href="?category=all">All fish</a>
-        <a class="market-chip" data-filter-kind="category" data-filter-value="sanma" href="?category=sanma">Sanma</a>
-        <a class="market-chip" data-filter-kind="category" data-filter-value="katsuo" href="?category=katsuo">Katsuo</a>
-        <a class="market-chip" data-filter-kind="category" data-filter-value="saba" href="?category=saba">Saba</a>
-      </div>
-    </nav>
-  </div>
+  <MarketBoard />
 </BaseLayout>
-
-<script>
-  import '../../lib/market-board';
-</script>
