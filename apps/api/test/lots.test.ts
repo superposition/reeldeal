@@ -6,6 +6,7 @@ import type { ObservationInput } from '../../../packages/domain/src';
 import { getListings } from '../src/routes/listings';
 import { getLot, postLot, postPublish } from '../src/routes/lot-service';
 import { postLotReview } from '../src/routes/review';
+import { seedDemoData } from '../../../scripts/seed';
 
 function freshDb(): Database {
   const database = new Database(':memory:', { strict: true });
@@ -55,6 +56,18 @@ const createRequest = (scanId: string, decisionId: string, price = 1800) => new 
 });
 
 describe('Lot gate and publish', () => {
+  test('seeded demo lot detail accepts persisted observation metadata', async () => {
+    const database = freshDb();
+    await seedDemoData(database);
+    const response = getLot(database, 'demo-lot-sanma');
+    expect(response.status).toBe(200);
+    const detail = await response.json();
+    expect(detail.lot.id).toBe('demo-lot-sanma');
+    expect(detail.observation.id).toBe('demo-observation-sanma');
+    expect(detail.effective_facts.species_label).toBe('sanma');
+    database.close();
+  });
+
   test('eligible decision creates one approved Lot, publishes once, and serves traceable detail', async () => {
     const database = freshDb();
     const { scanId, decisionId } = await decided(database);
