@@ -74,7 +74,7 @@ const price = (amount: number) => new Intl.NumberFormat(locale === 'ja' ? 'ja-JP
         {storefrontLots.map((item) => (
           <article class={`fish-card fish-card--${item.tone}`} data-fish-card data-category={item.category} data-search={`${item.name} ${item.ja} ${item.english}`} id={item.slug}>
             <div class="fish-card__main">
-              <div class="fish-card__image"><Image src={item.image} alt={locale === 'ja' ? item.ja : item.english} widths={[320, 640, 960]} sizes="(max-width: 480px) 100vw, 350px" loading="lazy" /></div>
+              <a class="fish-card__image" href={`${shopUrl}?category=${item.slug}`} aria-label={`${t.available}: ${locale === 'ja' ? item.ja : item.name}`}><Image src={item.image} alt={locale === 'ja' ? `${item.ja}の参考イラスト` : `Reference illustration of ${item.english}`} widths={[320, 640, 960]} sizes="(max-width: 480px) 100vw, 350px" loading="lazy" /></a>
               <div class="fish-card__copy">
                 <span class="fish-card__eyebrow" lang={locale === 'ja' ? 'en' : 'ja'}>{locale === 'ja' ? item.name : item.ja}</span>
                 <h3>{locale === 'ja' ? item.ja : item.name}</h3>
@@ -83,6 +83,7 @@ const price = (amount: number) => new Intl.NumberFormat(locale === 'ja' ? 'ja-JP
                 <div class="fish-card__price"><span>{t.price}</span><strong>{price(item.lot.priceJpy)}</strong></div>
               </div>
             </div>
+            <a class="fish-card__browse" href={`${shopUrl}?category=${item.slug}`}>{t.available}<span aria-hidden="true">↗</span></a>
             <details class="fish-card__details">
               <summary>{t.details}<span aria-hidden="true">+</span></summary>
               <dl><div><dt>{t.weight}</dt><dd>{item.lot.weightG.toLocaleString(locale)} g</dd></div><div><dt>{t.length}</dt><dd>{item.lot.lengthMm} mm</dd></div></dl>

@@ -40,7 +40,7 @@
 .fish-card--yellow { background: var(--color-accent); }
 .fish-card--lime { background: var(--color-listed); }
 .fish-card__main { display: grid; gap: 10px; }
-.fish-card__image { aspect-ratio: 3 / 2; border: 2px solid var(--color-ink); border-radius: 6px; overflow: hidden; background: #edf5f7; }
+.fish-card__image { display: block; aspect-ratio: 3 / 2; border: 2px solid var(--color-ink); border-radius: 6px; overflow: hidden; background: #edf5f7; }
 .fish-card__image img { display: block; width: 100%; height: 100%; object-fit: contain; }
 .fish-card__copy { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: 3px 10px; min-width: 0; }
 .fish-card__copy > :not(.fish-card__price) { grid-column: 1; }
@@ -50,6 +50,7 @@
 .fish-card__price { grid-column: 2; grid-row: 2 / 5; display: flex; flex-direction: column; align-items: end; align-self: end; }
 .fish-card__price span { font-size: .65rem; }
 .fish-card__price strong { font-family: var(--font-impact); font-size: 1.15rem; }
+.fish-card__browse { display: flex; align-items: center; justify-content: space-between; min-height: 44px; margin-top: 8px; font-size: .8rem; font-weight: 800; }
 .fish-card__details { margin-top: 8px; border-top: 2px solid rgb(21 17 15 / .2); font-size: .75rem; }
 .fish-card__details summary { display: flex; align-items: center; justify-content: space-between; min-height: 44px; font-weight: 800; cursor: pointer; }
 .fish-card__details summary::-webkit-details-marker { display: none; }

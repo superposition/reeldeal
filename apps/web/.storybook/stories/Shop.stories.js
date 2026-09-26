@@ -1,4 +1,4 @@
-import Shop from '../../src/pages/shop/index.astro';
+import Shop from '../../src/components/MarketStorefront.astro';
 
 export default {
   title: 'ReelDeal/03 Organisms/Shop',
@@ -7,3 +7,4 @@ export default {
 };
 
 export const PreviewBoard = {};
+export const Japanese = { args: { locale: 'ja' } };

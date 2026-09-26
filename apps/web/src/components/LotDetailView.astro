@@ -61,7 +61,7 @@ const checkSummary = detail && (corrections.length > 0
           sizes="392px"
           width={960}
           height={Math.round(960 * artwork.height / artwork.width)}
-          alt={facts?.species_label ?? 'Fish'}
+          alt={`Reference illustration of ${facts?.species_label ?? 'fish'}`}
           loading="eager"
           data-lot-image
         />
@@ -91,7 +91,7 @@ const checkSummary = detail && (corrections.length > 0
         <strong data-lot-price>{lot ? `¥${lot.price_jpy.toLocaleString('ja-JP')}` : ''}</strong>
         <div data-evidence-action><Button href="#lot-evidence" class="market-detail__browse">View proof</Button></div>
       </div>
-      <p class="market-head__note">Prices in JPY · settlement in JPYC</p>
+      <p class="market-head__note">Prices in JPY · planned settlement in JPYC</p>
       <slot name="offer" />
     </div>
   </div>
@@ -101,6 +101,7 @@ const checkSummary = detail && (corrections.length > 0
       <summary>How this lot was checked</summary>
       <p data-check-summary>{checkSummary}</p>
       <dl>
+        <div><dt>Photo source</dt><dd data-photo-source>{hasPhoto ? 'Submitted landing photo' : 'Reference illustration; no landing photo supplied'}</dd></div>
         <div><dt>Decision</dt><dd data-decision-answer>{decisionAnswer}</dd></div>
         <div><dt>Confidence source</dt><dd data-decision-source>{decision ? `${decision.confidence_source.replaceAll('_', ' ')} · ${Math.round(decision.confidence * 100)}%` : ''}</dd></div>
         <div><dt>Backend</dt><dd data-decision-backend>{decision?.model.id}</dd></div>

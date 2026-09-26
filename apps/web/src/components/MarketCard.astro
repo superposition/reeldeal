@@ -24,7 +24,7 @@ const detailUrl = `${base}shop/lot/?id=${encodeURIComponent(lot.id)}`;
       sizes="(max-width: 350px) 128px, 160px"
       width={480}
       height={Math.round(480 * image.height / image.width)}
-      alt={locale === 'ja' && species ? species.ja : species?.english ?? lot.species}
+      alt={`${locale === 'ja' && species ? species.ja : species?.english ?? lot.species} · ${t.referenceImage}`}
       loading={first ? 'eager' : 'lazy'}
     />
   </a>

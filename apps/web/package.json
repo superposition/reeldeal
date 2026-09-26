@@ -8,7 +8,7 @@
     "preview": "astro preview",
     "check": "astro check",
     "storybook": "bun run build-storybook && python3 -m http.server 6007 --directory storybook-static",
-    "build-storybook": "storybook build -o storybook-static"
+    "build-storybook": "storybook build -o storybook-static && node ../../scripts/prepare-storybook.mjs"
   },
   "dependencies": {
     "@astrojs/solid-js": "^7.0.2",

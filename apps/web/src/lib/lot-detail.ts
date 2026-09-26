@@ -39,7 +39,7 @@ if (root) {
     photo.closest('picture')?.querySelectorAll('source').forEach((source) => source.remove());
     photo.removeAttribute('srcset');
     photo.src = src;
-    photo.alt = species ?? 'Fish';
+    photo.alt = `Reference illustration of ${species ?? 'fish'}`;
     photo.closest<HTMLElement>('.market-detail__media')!.dataset.reference = 'true';
   }
   const showUnavailable = (text: string) => {
@@ -103,6 +103,7 @@ if (root) {
     }));
     set('[data-lot-id]', lot.id);
     const hasPhoto = /^data:image\/(?:jpeg|png|webp|avif);base64,[a-z0-9+/=]+$/i.test(observation.image_ref);
+    set('[data-photo-source]', hasPhoto ? 'Submitted landing photo' : 'Reference illustration; no landing photo supplied');
     if (!hasPhoto) showReference(facts.species_label);
     if (hasPhoto && photo) {
       photo.closest('picture')?.querySelectorAll('source').forEach((source) => source.remove());
