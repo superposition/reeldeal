@@ -18,12 +18,16 @@ function showValue(value: unknown, unit = ''): string {
   return `${value}${unit ? ` ${unit}` : ''}`;
 }
 
-export default function ReviewForm(props: { initial: ReviewSnapshot; apiOrigin: string }) {
+export default function ReviewForm(props: {
+  initial: ReviewSnapshot;
+  apiOrigin: string;
+  onReviewChange?: (review: ReviewSnapshot) => void;
+}) {
   const [review, setReview] = createSignal(props.initial);
   const [field, setField] = createSignal<Field>('weight_g');
   const [value, setValue] = createSignal('');
   const [reason, setReason] = createSignal('');
-  const [actorId, setActorId] = createSignal(props.initial.lot.id.startsWith('demo-lot-') ? 'demo-operator' : '');
+  const [actorId, setActorId] = createSignal(props.initial.lot.id.startsWith('demo-lot-') ? 'demo-operator' : 'demo-intake-operator');
   const [attest, setAttest] = createSignal(false);
   const [saving, setSaving] = createSignal(false);
   const [connected, setConnected] = createSignal(false);
@@ -41,6 +45,7 @@ export default function ReviewForm(props: { initial: ReviewSnapshot; apiOrigin: 
       if (!response.ok) throw new Error('The live review record could not be loaded.');
       const body = await response.json() as { review: ReviewSnapshot };
       setReview(body.review);
+      props.onReviewChange?.(body.review);
       setConnected(true);
       setMessage('Live review record loaded from the API.');
     }).catch(() => setMessage('The API is unavailable or this lot is not in its database. This is a static preview; no correction can be submitted.'));
@@ -90,6 +95,7 @@ export default function ReviewForm(props: { initial: ReviewSnapshot; apiOrigin: 
             : 'The correction was not saved. Check the fields and retry.'));
       }
       setReview(body.review);
+      props.onReviewChange?.(body.review);
       setValue('');
       setReason('');
       setAttest(false);
@@ -169,9 +175,9 @@ export default function ReviewForm(props: { initial: ReviewSnapshot; apiOrigin: 
                 <small id="review-value-error" role="alert">{fieldError()}</small>
               </div>
               <div class="review-form__field">
-                <label for="review-actor">Reviewer ID</label>
+                <label for="review-actor">Demo reviewer ID</label>
                 <input id="review-actor" type="text" value={actorId()} onInput={(event) => setActorId(event.currentTarget.value)} required />
-                <small>Must be an active seller or operator for this lot. The seeded fixture uses demo-operator. This ID is attribution, not production login.</small>
+                <small>Attribution, not sign-in. The server requires an active reviewer for this lot.</small>
               </div>
               <div class="review-form__field review-form__field--wide">
                 <label for="review-reason">Reason for correction</label>

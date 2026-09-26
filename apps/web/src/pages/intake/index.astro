@@ -1,6 +1,6 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import Scanner from '../../components/Scanner';
+import LandingWorkflow from '../../components/LandingWorkflow';
 import '../../styles/intake.css';
 
 const apiOrigin = import.meta.env.PUBLIC_API_ORIGIN
@@ -20,6 +20,6 @@ const apiOrigin = import.meta.env.PUBLIC_API_ORIGIN
     </div>
   </section>
   <div class="intake-main shell">
-    <Scanner client:load apiOrigin={apiOrigin} />
+    <LandingWorkflow client:load apiOrigin={apiOrigin} />
   </div>
 </BaseLayout>
