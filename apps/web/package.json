@@ -9,13 +9,14 @@
     "check": "astro check"
   },
   "dependencies": {
-    "astro": "^7.3.5",
     "@astrojs/solid-js": "^7.0.2",
     "@huggingface/tokenizers": "0.2.0",
     "@reeldeal/decision": "workspace:*",
     "@reeldeal/domain": "workspace:*",
+    "astro": "^7.3.5",
     "cookie": "^2.0.1",
     "onnxruntime-web": "1.30.0",
+    "sharp": "^0.35.4",
     "solid-js": "^1.9.15"
   }
 }

@@ -1,0 +1,148 @@
+---
+import { Image } from 'astro:assets';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ActionTile from './ui/ActionTile.astro';
+import Badge from './ui/Badge.astro';
+import Button from './ui/Button.astro';
+import landing from '../assets/fish/katsuo-landing.jpg';
+import { copy, fish, storefrontLots, type Locale } from '../data/fish';
+import '../styles/fish-storefront.css';
+
+const { locale = 'en', shop = false } = Astro.props as { locale?: Locale; shop?: boolean };
+const t = copy[locale];
+const base = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/`;
+const shopUrl = `${base}${locale === 'ja' ? 'ja/' : ''}shop/`;
+const categories = [
+  { id: 'all', label: t.all, tone: 'blue', image: fish[0].image },
+  { id: 'fish', label: t.fish, tone: 'pink', image: fish[2].image },
+  { id: 'tuna', label: t.tuna, tone: 'yellow', image: fish[4].image },
+  { id: 'shellfish', label: t.shellfish, tone: 'lime', image: fish[3].image },
+] as const;
+const price = (amount: number) => new Intl.NumberFormat(locale === 'ja' ? 'ja-JP' : 'en-JP', { style: 'currency', currency: 'JPY', maximumFractionDigits: 0 }).format(amount);
+---
+
+<BaseLayout title={t.title} description={t.lead} section={shop ? 'shop' : 'board'} locale={locale}>
+  <div class="fish-storefront shell" data-fish-storefront>
+    <div class="market-toolbar">
+      <span>{t.region}</span>
+      <nav aria-label={locale === 'ja' ? '言語' : 'Language'} class="language-switch">
+        <a href={`${base}${shop ? 'shop/' : ''}`} lang="en" hreflang="en" aria-current={locale === 'en' ? 'page' : undefined}>EN</a>
+        <a href={`${base}ja/${shop ? 'shop/' : ''}`} lang="ja" hreflang="ja" aria-current={locale === 'ja' ? 'page' : undefined}>日本語</a>
+      </nav>
+    </div>
+    {!shop ? (
+      <>
+        <section class="fish-hero" aria-labelledby="market-title">
+          <Image src={landing} alt={t.landingCredit} widths={[480, 800, 1280]} sizes="(max-width: 480px) 100vw, 370px" format="webp" loading="eager" fetchpriority="high" />
+          <div class="fish-hero__copy">
+            <span>ReelDeal / {t.region}</span>
+            <h1 id="market-title">{t.hero}</h1>
+            <p>{t.lead}</p>
+            <Button href={shopUrl} tone="yellow">{t.shop} <span aria-hidden="true">↗</span></Button>
+          </div>
+        </section>
+        <nav class="fish-categories" aria-label={t.browse}>
+          {categories.map((category) => (
+            <ActionTile href={`${shopUrl}?category=${category.id}`} label={category.label} tone={category.tone}>
+              <Image slot="icon" src={category.image} alt="" width={80} height={60} loading="lazy" />
+            </ActionTile>
+          ))}
+        </nav>
+      </>
+    ) : (
+      <header class="fish-shop-heading">
+        <span class="market-kicker">ReelDeal</span>
+        <h1 id="market-title">{t.browse}</h1>
+        <p>{t.region} / {t.settlement}</p>
+      </header>
+    )}
+    <section class="fish-catalog" aria-labelledby="catalog-title">
+      <div class="fish-catalog__heading"><h2 id="catalog-title">{t.collection}</h2><Badge label={t.preview} tone="yellow" /></div>
+      <p class="market-notice">{t.note}</p>
+      <form class="fish-search" role="search">
+        <label class="visually-hidden" for="fish-search">{t.search}</label>
+        <input id="fish-search" type="search" name="q" placeholder={t.searchHint} autocomplete="off" />
+        <button type="submit" aria-label={t.search}><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><circle cx="10" cy="10" r="6" /><path d="m15 15 5 5" /></svg></button>
+      </form>
+      <nav class="fish-filters" aria-label={t.browse}>
+        {categories.map((category) => <a href={`?category=${category.id}`} data-category={category.id} aria-current={category.id === 'all' ? 'true' : undefined}>{category.label}</a>)}
+      </nav>
+      <p class="fish-result-count" role="status"><span data-result-count>{storefrontLots.length}</span> {t.count}</p>
+      <div class="fish-grid">
+        {storefrontLots.map((item) => (
+          <article class={`fish-card fish-card--${item.tone}`} data-fish-card data-category={item.category} data-search={`${item.name} ${item.ja} ${item.english}`} id={item.slug}>
+            <div class="fish-card__main">
+              <div class="fish-card__image"><Image src={item.image} alt={locale === 'ja' ? item.ja : item.english} width={320} loading="lazy" /></div>
+              <div class="fish-card__copy">
+                <span class="fish-card__eyebrow" lang={locale === 'ja' ? 'en' : 'ja'}>{locale === 'ja' ? item.name : item.ja}</span>
+                <h3>{locale === 'ja' ? item.ja : item.name}</h3>
+                <p>{locale === 'ja' ? t.review : item.english}</p>
+                <span class="fish-card__weight">{item.lot.weightG.toLocaleString(locale)} g</span>
+                <div class="fish-card__price"><span>{t.price}</span><strong>{price(item.lot.priceJpy)}</strong></div>
+              </div>
+            </div>
+            <details class="fish-card__details">
+              <summary>{t.details}<span aria-hidden="true">+</span></summary>
+              <dl><div><dt>{t.weight}</dt><dd>{item.lot.weightG.toLocaleString(locale)} g</dd></div><div><dt>{t.length}</dt><dd>{item.lot.lengthMm} mm</dd></div></dl>
+              <p>{t.settlement} · {t.review}</p><p>{t.audit}</p>
+            </details>
+          </article>
+        ))}
+      </div>
+      <p class="market-empty" data-empty hidden>{t.empty}</p>
+    </section>
+    <details class="fish-credits">
+      <summary>{t.credits}</summary><p>{t.creditNote}</p>
+      <ul>
+        <li><a href="https://commons.wikimedia.org/wiki/File:Katsuo_no_Mizuage_20100530.jpg">{t.landingCredit}</a> — omaezakicity, <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a></li>
+        {fish.map((item) => <li><a href={`https://commons.wikimedia.org/wiki/${item.source}`}>{locale === 'ja' ? item.ja : item.english}</a> — {item.author}, <a href={item.licenseUrl}>{item.license}</a></li>)}
+      </ul>
+    </details>
+  </div>
+</BaseLayout>
+
+<script>
+  const root = document.querySelector<HTMLElement>('[data-fish-storefront]');
+  if (root) {
+    const input = root.querySelector<HTMLInputElement>('#fish-search')!;
+    const cards = [...root.querySelectorAll<HTMLElement>('[data-fish-card]')];
+    const links = [...root.querySelectorAll<HTMLAnchorElement>('.fish-filters a')];
+    const normalize = (value: string) => value.normalize('NFKC').toLocaleLowerCase().trim();
+    const render = () => {
+      const params = new URLSearchParams(location.search);
+      const category = ['fish', 'tuna', 'shellfish'].includes(params.get('category') ?? '') ? params.get('category')! : 'all';
+      const query = params.get('q') ?? '';
+      input.value = query;
+      let count = 0;
+      for (const card of cards) {
+        card.hidden = !(category === 'all' || category === card.dataset.category) || !normalize(card.dataset.search ?? '').includes(normalize(query));
+        if (!card.hidden) count++;
+      }
+      for (const link of links) {
+        link.setAttribute('aria-current', String(link.dataset.category === category));
+        const target = new URL(location.href);
+        target.searchParams.set('category', link.dataset.category!);
+        link.href = target.href;
+      }
+      root.querySelector('[data-result-count]')!.textContent = String(count);
+      (root.querySelector('[data-empty]') as HTMLElement).hidden = count > 0;
+      for (const link of root.querySelectorAll<HTMLAnchorElement>('.language-switch a')) link.search = location.search;
+    };
+    root.querySelector('form')!.addEventListener('submit', (event) => {
+      event.preventDefault();
+      const url = new URL(location.href);
+      if (input.value.trim()) url.searchParams.set('q', input.value.trim());
+      else url.searchParams.delete('q');
+      history.pushState(null, '', url);
+      render();
+    });
+    for (const link of links) link.addEventListener('click', (event) => {
+      if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      event.preventDefault();
+      history.pushState(null, '', link.href);
+      render();
+    });
+    window.addEventListener('popstate', render);
+    render();
+  }
+</script>
