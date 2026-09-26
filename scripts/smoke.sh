@@ -14,4 +14,6 @@ if ! SMOKE_HEALTH="$health" bun -e '
   exit 1
 fi
 
-printf 'health: %s\nSMOKE OK\n' "$health"
+printf 'health: %s\n' "$health"
+API="$API" bun scripts/smoke-market.ts
+printf 'SMOKE OK\n'
