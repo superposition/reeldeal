@@ -62,7 +62,7 @@ It prints `health: {"ok":true,"db":"up","backends":{"decision":"stub"}}`,
 then a published listing, `missing weight: pending_review → publish 409
 (noul)`, two signed offers, rejected tampering/replay, and `SMOKE OK`.
 Accept/pay are explicitly skipped when no seller token is supplied. This
-write smoke refuses non-local API hosts. The current checkout passed 91 Bun tests, nine
+write smoke refuses non-local API hosts. The current checkout passed 93 Bun tests, nine
 Astro static pages, and six Forge tests; see the ticket handoff for exact run
 evidence. Do not use personal landing data in this demo.
 
@@ -143,10 +143,13 @@ deployed model route, headless Chrome 153 reported an isolated first download
 and verification in 38.6 seconds, four threads, and a typed sample result;
 the second load used the verified cache in 804 ms; disabling isolation used
 one thread. [RD-13's runtime evidence](https://github.com/superposition/reeldeal/issues/32#issuecomment-5842574772)
-records the exact run. That earlier model-route proof has not been repeated
-against this README's Pages revision; fully network-disabled operation and
-fish-specific accuracy remain **unverified**. A model sample is not a fish
-grade or species classifier.
+records the exact run. A later fresh-tab check loaded and verified q4e8 in
+34.8 seconds on the one-thread fallback, then disabled networking: an uncached
+fetch failed while the already-loaded model produced a typed sample in
+3.079 seconds. This proves **warm-tab offline inference**, not a cold offline
+reload. That earlier four-thread/cache run has not been repeated against this
+revision; cold offline startup and fish-specific accuracy remain **unverified**.
+A model sample is not a fish grade or species classifier.
 
 ## Remaining demo gates and attribution
 
