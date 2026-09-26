@@ -2,6 +2,7 @@ import type { Database } from 'bun:sqlite';
 import { createHash } from 'node:crypto';
 import { gate, ObservationSchema, TypedDecisionInputSchema, type Observation, type TypedDecisionInput } from '../packages/domain/src/index';
 import { createStubBackend } from '../packages/decision/src/stub';
+import { seedIntakeReviewer } from '../apps/api/src/db/demo-market';
 
 // Synthetic board snapshots, not real landings, sales, signatures, or chain evidence.
 // IDs and timestamps are stable so a second run cannot duplicate or rewrite them.
@@ -74,6 +75,7 @@ async function prepareFixtures(): Promise<PreparedFixture[]> {
 export async function seedDemoData(db: Database): Promise<{ inserted: number; skipped: number }> {
   const prepared = await prepareFixtures();
   return db.transaction(() => {
+    seedIntakeReviewer(db);
     db.query('INSERT OR IGNORE INTO orgs (id,slug,name,status,created_at,updated_at) VALUES (?,?,?,?,?,?)')
       .run(DEMO_ORG, DEMO_ORG, 'Kesennuma synthetic demo', 'active', AT, AT);
     db.query('INSERT OR IGNORE INTO users (id,org_id,label,wallet,role,status,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?)')

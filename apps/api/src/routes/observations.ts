@@ -1,8 +1,7 @@
 import { ObservationInputSchema, ObservationSchema } from '@reeldeal/domain';
 import { audit, db, id, now } from '../db';
+import { ensureIntakeOrg } from '../db/demo-market';
 import { json, options, pending } from './stub';
-
-const ORG_SLUG = 'kessenuma';
 
 type StoredObservation = {
   id: string;
@@ -33,16 +32,6 @@ function latest(scanId: string): StoredObservation | null {
   `).get(scanId) as StoredObservation | null;
 }
 
-function orgId(): string {
-  const existing = db.query('SELECT id FROM orgs WHERE slug = ?').get(ORG_SLUG) as { id: string } | null;
-  if (existing) return existing.id;
-  const org = id();
-  const at = now();
-  db.query('INSERT OR IGNORE INTO orgs (id, slug, name, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)')
-    .run(org, ORG_SLUG, 'Kesennuma demo market', 'active', at, at);
-  return (db.query('SELECT id FROM orgs WHERE slug = ?').get(ORG_SLUG) as { id: string }).id;
-}
-
 export async function postObservation(request: Request): Promise<Response> {
   let body: unknown;
   try {
@@ -61,7 +50,7 @@ export async function postObservation(request: Request): Promise<Response> {
   const observation = parsed.data;
   const payload = JSON.stringify(observation);
   const result = db.transaction(() => {
-    const owner = orgId();
+    const owner = ensureIntakeOrg(db);
     const previous = latest(observation.scan_id);
     if (previous?.payload_json === payload) {
       return { observation: wire(previous), replayed: true, replaced: false, status: 200 };
