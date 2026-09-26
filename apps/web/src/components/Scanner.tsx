@@ -22,7 +22,7 @@ export default function Scanner(props: { apiOrigin: string }) {
   let video!: HTMLVideoElement;
   let stream: MediaStream | undefined;
   const [camera, setCamera] = createSignal<'idle' | 'starting' | 'ready' | 'unavailable'>('idle');
-  const [cameraMessage, setCameraMessage] = createSignal('Start the camera to make a real observation.');
+  const [cameraMessage, setCameraMessage] = createSignal('Camera off. Start it when you are ready.');
   const [imageRef, setImageRef] = createSignal<string | null>(null);
   const [capturedAt, setCapturedAt] = createSignal<string | null>(null);
   const [scanId, setScanId] = createSignal<string | null>(null);
@@ -43,16 +43,16 @@ export default function Scanner(props: { apiOrigin: string }) {
     const previousId = activeId ?? localStorage.getItem(LAST_SCAN_KEY);
     if (!previousId) return;
     if (!api) {
-      setLastSavedMessage('A prior scan ID is stored here, but this page has no API connection to verify it.');
+      setLastSavedMessage('A previous landing is stored on this device, but the market is not connected to check it.');
       return;
     }
     void fetch(`${api}/v1/observations/${encodeURIComponent(previousId)}`)
       .then(async (response) => {
-        if (!response.ok) throw new Error('The saved scan could not be loaded from the API.');
+        if (!response.ok) throw new Error('The saved landing could not be loaded.');
         const body = await response.json() as { observation: SavedObservation };
         setLastSaved(body.observation);
       })
-      .catch(() => setLastSavedMessage('The last scan ID is saved locally, but the API is unavailable. Try again when it is connected.'));
+      .catch(() => setLastSavedMessage('A previous landing is stored on this device, but it could not be loaded. Try again when the market is connected.'));
   });
 
   onCleanup(() => {
@@ -73,13 +73,13 @@ export default function Scanner(props: { apiOrigin: string }) {
       video.srcObject = stream;
       await video.play();
       setCamera('ready');
-      setCameraMessage('Camera ready. Frame the landing, then take a photo.');
+      setCameraMessage('Camera ready. Frame the fish and take a photo.');
     } catch (error) {
       setCamera('unavailable');
       const denied = error instanceof DOMException && error.name === 'NotAllowedError';
       setCameraMessage(denied
-        ? 'Camera permission was denied. Enable it in browser settings and try again. Measurements remain editable; saving needs a real photo.'
-        : 'The camera could not start. Check the connection and try again. Measurements remain editable; saving needs a real photo.');
+        ? 'Camera blocked. Allow it in browser settings and try again. You can still enter facts; saving needs a photo.'
+        : 'Camera unavailable. Check the connection and try again. You can still enter facts; saving needs a photo.');
     }
   }
 
@@ -100,7 +100,7 @@ export default function Scanner(props: { apiOrigin: string }) {
     const currentId = scanId() ?? crypto.randomUUID();
     setScanId(currentId);
     localStorage.setItem(ACTIVE_SCAN_KEY, currentId);
-    setSaveMessage('Photo captured. Review the facts before saving.');
+    setSaveMessage('Photo captured. Check the facts before saving.');
   }
 
   function numberOrNull(value: string, field: string, maximum: number, nextErrors: Record<string, string>) {
@@ -131,15 +131,15 @@ export default function Scanner(props: { apiOrigin: string }) {
     const facts = validate();
     if (!facts.valid) return;
     if (!imageRef() || !capturedAt() || !scanId()) {
-      setSaveMessage('Take a real camera photo before saving this observation.');
+      setSaveMessage('Take a camera photo before saving this landing.');
       return;
     }
     if (!api) {
-      setSaveMessage('Saving is unavailable because no public API origin is configured for this site.');
+      setSaveMessage('Saving is unavailable because this site is not connected to the market.');
       return;
     }
     setSaving(true);
-    setSaveMessage('Saving observation…');
+    setSaveMessage('Saving landing…');
     const controller = new AbortController();
     const timer = window.setTimeout(() => controller.abort(), 10000);
     try {
@@ -169,17 +169,17 @@ export default function Scanner(props: { apiOrigin: string }) {
           for (const issue of body.issues) fieldErrors[String(issue.path[0] ?? 'form')] = issue.message;
           setErrors(fieldErrors);
         }
-        throw new Error(response.status === 400 ? 'Check the marked fields and try again.' : `The API returned ${response.status}. Try saving again.`);
+        throw new Error(response.status === 400 ? 'Check the marked fields and try again.' : `Saving failed (${response.status}). Try again.`);
       }
       localStorage.setItem(LAST_SCAN_KEY, body.observation.scan_id);
       localStorage.removeItem(ACTIVE_SCAN_KEY);
       setLastSaved(body.observation);
       setLastSavedMessage('');
       setSaveMessage(body.replayed
-        ? 'This scan was already saved. No duplicate was created.'
+        ? 'Already saved. No duplicate landing was created.'
         : body.replaced
-          ? 'Updated facts saved as a new observation under the same scan.'
-          : 'Observation saved. The scan is ready for a typed decision.');
+          ? 'Updated facts saved under the same landing.'
+          : 'Landing saved. It is ready for review.');
     } catch (error) {
       setSaveMessage(error instanceof DOMException && error.name === 'AbortError'
         ? 'Saving timed out. Keep this scan open and retry; the same scan ID prevents duplication.'
@@ -200,18 +200,25 @@ export default function Scanner(props: { apiOrigin: string }) {
     setSpeciesLabel('');
     setOperatorId('');
     setErrors({});
-    setSaveMessage('Ready for a new landing. Take a photo to assign its scan ID.');
+    setSaveMessage('Ready for a new landing. Take a photo to begin.');
   }
 
   return (
     <section class="scanner" aria-label="Landing scanner">
       <div class="scanner__grid">
         <div class="scanner__camera-panel">
-          <div class="scanner__viewport">
+          <div class="scanner__section-head">
+            <span class="scanner__step">01</span>
+            <h2>Take a photo</h2>
+          </div>
+          <div class={`scanner__viewport scanner__viewport--${camera()}`}>
             <video ref={video} autoplay muted playsinline aria-label="Live camera preview" style={{ display: imageRef() ? 'none' : 'block' }} />
             <Show when={imageRef()}><img src={imageRef()!} alt="Captured fish landing" /></Show>
             <Show when={camera() !== 'ready' && !imageRef()}>
-              <p class="scanner__placeholder">Camera preview appears here</p>
+              <div class="scanner__placeholder">
+                <span class="scanner__viewfinder" aria-hidden="true" />
+                <strong>{camera() === 'starting' ? 'Connecting…' : camera() === 'unavailable' ? 'Camera unavailable' : 'Camera off'}</strong>
+              </div>
             </Show>
           </div>
           <p class="scanner__camera-message" role={camera() === 'unavailable' ? 'alert' : 'status'}>{cameraMessage()}</p>
@@ -223,13 +230,13 @@ export default function Scanner(props: { apiOrigin: string }) {
               {imageRef() ? 'Retake photo' : 'Take photo'}
             </button>
           </div>
-          <p class="scanner__hint">The photo is evidence for the operator. No species is inferred from pixels.</p>
+          <p class="scanner__camera-note">A photo is needed to save.</p>
         </div>
 
         <form class="scanner__form" onSubmit={save} novalidate>
           <fieldset>
-            <legend>Landing facts</legend>
-            <p class="scanner__hint">Enter measured values only. Blank fields remain unknown and go to review later.</p>
+            <legend><span class="scanner__step">02</span> Landing facts</legend>
+            <p class="scanner__hint">Only enter measurements you have. Leave unknowns blank.</p>
             <div class="scanner__fields">
               <div class="scanner__field">
                 <label for="length-mm">Length <span>(mm)</span></label>
@@ -241,34 +248,38 @@ export default function Scanner(props: { apiOrigin: string }) {
                 <input id="weight-g" type="number" inputmode="decimal" min="0" max="200000" step="any" value={weightG()} onInput={(event) => setWeightG(event.currentTarget.value)} aria-invalid={Boolean(errors().weight_g)} aria-describedby="weight-error" />
                 <p id="weight-error" class="scanner__error" role="alert">{errors().weight_g ?? ''}</p>
               </div>
-              <div class="scanner__field">
-                <label for="species-label">Species <span>(operator label)</span></label>
+              <div class="scanner__field scanner__field--wide">
+                <label for="species-label">Fish species</label>
                 <input id="species-label" type="text" autocomplete="off" value={speciesLabel()} onInput={(event) => setSpeciesLabel(event.currentTarget.value)} aria-invalid={Boolean(errors().species_label)} aria-describedby="species-error" />
                 <p id="species-error" class="scanner__error" role="alert">{errors().species_label ?? ''}</p>
               </div>
-              <div class="scanner__field">
-                <label for="operator-id">Confirming operator</label>
+              <div class="scanner__field scanner__field--wide">
+                <label for="operator-id">Checked by</label>
                 <input id="operator-id" type="text" autocomplete="off" value={operatorId()} onInput={(event) => setOperatorId(event.currentTarget.value)} aria-describedby="operator-help" />
-                <p id="operator-help" class="scanner__hint">A demo attribution label, not account authentication.</p>
+                <p id="operator-help" class="scanner__hint">Name or initials of the person who checked the species. Demo only.</p>
               </div>
             </div>
           </fieldset>
-          <p class="scanner__hint">Manual weight is not a stable scale reading. The review gate will see it as unverified.</p>
-          <div class="scanner__actions">
+          <Show when={weightG().trim()}><p class="scanner__review-note">Manual weight needs review.</p></Show>
+          <div class="scanner__actions scanner__action-rail">
             <button type="submit" class="scanner__button" disabled={saving() || !imageRef() || !api}>
-              {saving() ? 'Saving…' : 'Save observation'}
+              {saving() ? 'Saving…' : 'Save landing'}
             </button>
             <button type="button" class="scanner__button scanner__button--secondary" onClick={newLanding}>New landing</button>
           </div>
-          <Show when={!api}><p class="scanner__error" role="status">This site has no API connection. Set the public API origin at build time to save scans.</p></Show>
+          <Show when={!api}><p class="scanner__error" role="status">The market connection is unavailable. Saving is off for now.</p></Show>
           <p class="scanner__status" role="status" aria-live="polite">{saveMessage()}</p>
         </form>
       </div>
       <Show when={lastSaved()}>
         <aside class="scanner__saved" aria-label="Last saved scan">
-          <h2>Saved scan</h2>
-          <p>Loaded from the API. Scan <code>{lastSaved()!.scan_id}</code> · observation <code>{lastSaved()!.id}</code></p>
+          <h2>Last saved landing</h2>
           <p>Length {lastSaved()!.length_mm ?? 'unknown'} mm · weight {lastSaved()!.weight_g ?? 'unknown'} g</p>
+          <details>
+            <summary>Record IDs</summary>
+            <p>Scan <code>{lastSaved()!.scan_id}</code></p>
+            <p>Observation <code>{lastSaved()!.id}</code></p>
+          </details>
         </aside>
       </Show>
       <Show when={lastSavedMessage()}><p class="scanner__status" role="status">{lastSavedMessage()}</p></Show>

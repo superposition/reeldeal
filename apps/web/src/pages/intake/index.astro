@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import Scanner from '../../components/Scanner';
+import '../../styles/intake.css';
 
 const apiOrigin = import.meta.env.PUBLIC_API_ORIGIN
   ?? (import.meta.env.DEV ? 'http://127.0.0.1:8787' : '');
@@ -11,12 +12,14 @@ const apiOrigin = import.meta.env.PUBLIC_API_ORIGIN
   description="Capture a Kesennuma fish landing as structured, reviewable facts."
   section="intake"
 >
-  <section class="page-heading shell">
-    <p class="eyebrow">Dockside intake</p>
-    <h1>Record a landing</h1>
-    <p class="intro">Take a real photo and enter the measurements you have. Missing facts stay missing; review comes before any lot is listed.</p>
+  <section class="intake-head">
+    <div class="shell">
+      <p class="eyebrow">Kesennuma · dockside</p>
+      <h1>Record a landing</h1>
+      <p>Photo first. Add only the facts you measured.</p>
+    </div>
   </section>
-  <div class="section shell">
+  <div class="intake-main shell">
     <Scanner client:load apiOrigin={apiOrigin} />
   </div>
 </BaseLayout>
