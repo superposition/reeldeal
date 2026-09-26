@@ -1,0 +1,11 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import MarketBoard from './MarketBoard.astro';
+import { marketCopy } from '../data/market-copy';
+import type { Locale } from '../data/fish';
+const { locale = 'en' } = Astro.props as { locale?: Locale };
+const t = marketCopy[locale];
+---
+<BaseLayout title={t.title} description={t.description} section="shop" locale={locale}>
+  <MarketBoard locale={locale} />
+</BaseLayout>

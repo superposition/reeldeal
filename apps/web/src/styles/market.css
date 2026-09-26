@@ -76,9 +76,8 @@
 
 .market-card {
   display: grid;
-  grid-template-rows: minmax(0, 1fr) auto;
-  gap: 5px;
-  aspect-ratio: 1;
+  grid-template-rows: auto 1fr auto;
+  gap: 8px;
   min-width: 0;
   padding: 6px;
   color: var(--color-ink);
@@ -92,6 +91,7 @@
 .market-card--yellow { background: var(--color-accent); }
 .market-card--blue { background: var(--color-water); }
 .market-card__media {
+  display: block;
   position: relative;
   min-width: 0;
   min-height: 0;
@@ -99,13 +99,7 @@
   border: 2px solid var(--color-ink);
   border-radius: 6px;
   background: var(--color-earth);
-}
-.market-card__media::after {
-  position: absolute;
-  inset: 0;
-  content: '';
-  background: linear-gradient(180deg, rgb(21 17 15 / 25%), transparent 35%, rgb(21 17 15 / 88%));
-  pointer-events: none;
+  aspect-ratio: 3 / 2;
 }
 .market-card__media img, .market-card__media picture {
   display: block;
@@ -114,15 +108,11 @@
   object-fit: cover;
 }
 .market-card__image-copy {
-  position: absolute;
-  z-index: 1;
-  inset: 4px;
   display: flex;
   flex-direction: column;
   align-items: start;
-  justify-content: space-between;
+  gap: 7px;
   min-width: 0;
-  pointer-events: none;
 }
 .market-card__status {
   min-height: 20px;
@@ -131,17 +121,14 @@
 }
 .market-card__status .rd-ui-badge__dot { display: none; }
 .market-card__status strong { font-size: .65rem; }
-.market-card__image-facts { display: grid; min-width: 0; gap: 1px; color: white; text-shadow: 0 1px 6px var(--color-ink); }
-.market-card h2 { margin: 0; font-family: var(--font-impact); font-size: 1.32rem; letter-spacing: -.03em; line-height: 1; overflow-wrap: anywhere; }
+.market-card__image-facts { display: grid; min-width: 0; gap: 4px; color: var(--color-ink); }
+.market-card h2 { margin: 0; font-family: var(--font-impact); font-size: 1.2rem; letter-spacing: -.03em; line-height: 1.1; overflow-wrap: anywhere; }
 .market-card__image-facts p, .market-card__image-facts small {
   display: block;
   margin: 0;
-  overflow: hidden;
   font-size: .71rem;
   font-weight: 900;
-  line-height: 1.1;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  line-height: 1.3;
 }
 .market-card__image-facts small { font-size: .64rem; }
 .market-card__foot { display: flex; align-items: center; justify-content: space-between; gap: 3px; min-width: 0; }
@@ -156,12 +143,12 @@
 }
 .market-card__action:hover { background: #fff; }
 @media (max-width: 350px) {
-  .market-card { padding: 4px; gap: 3px; }
+  .market-card { padding: 4px; gap: 6px; }
   .market-card h2 { font-size: 1.08rem; }
   .market-card__image-facts p { white-space: normal; text-overflow: clip; line-height: 1.05; }
   .market-card__image-facts p span:not(.market-card__fact-divider) { display: block; }
   .market-card__fact-divider { display: none; }
-  .market-card__image-facts small { display: none; }
+  .market-card__image-facts small { font-size: .6rem; }
   .market-card__foot strong { font-size: .77rem; }
   .market-card__action { min-width: 44px; padding-inline: 4px; font-size: .58rem; }
 }
@@ -174,6 +161,7 @@ html:has(.market-detail) { background: var(--color-review); }
 .market-detail__media { position: relative; min-width: 0; }
 .market-detail__media picture, .market-detail__media img { display: block; width: 100%; height: auto; }
 .market-detail__media img { aspect-ratio: 1.05; object-fit: cover; border: 3px solid var(--color-ink); border-radius: var(--radius-card); }
+.market-detail__media[data-reference="true"] img { aspect-ratio: 3 / 2; object-fit: contain; background: #edf5f7; }
 .market-detail__photo-badge { position: absolute; top: var(--space-3); left: var(--space-3); }
 .market-detail__media p { margin: 4px 0 0; color: var(--color-ink-soft); font-size: .68rem; font-weight: 700; }
 .market-detail__copy { display: grid; gap: var(--space-2); margin-top: var(--space-2); }
@@ -239,3 +227,5 @@ html:has(.market-detail) { background: var(--color-review); }
 .market-detail__audit li { display: grid; gap: var(--space-1); padding-left: var(--space-3); border-left: 2px solid var(--color-board); }
 .market-detail__audit span { color: var(--color-ink-soft); font-size: .875rem; overflow-wrap: anywhere; }
 .market-detail__lot-id { margin: 0; padding: 0 var(--space-4) var(--space-3); color: var(--color-ink-soft); font-size: .7rem; overflow-wrap: anywhere; }
+.market-card--reference .market-card__media img { object-fit: contain; background: #edf5f7; }
+.market-card[hidden] { display: none; }

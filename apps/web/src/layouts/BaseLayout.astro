@@ -2,18 +2,20 @@
 import '../styles/tokens.css';
 import '../styles/global.css';
 
-const { title, description, section = 'board' } = Astro.props as {
+const { title, description, section = 'board', locale = 'en' } = Astro.props as {
   title: string;
   description: string;
   section?: 'board' | 'shop' | 'intake' | 'model' | 'provenance';
+  locale?: 'en' | 'ja';
 };
 const base = import.meta.env.BASE_URL.endsWith('/')
   ? import.meta.env.BASE_URL
   : `${import.meta.env.BASE_URL}/`;
+const home = `${base}${locale === 'ja' ? 'ja/' : ''}`;
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang={locale}>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -23,21 +25,21 @@ const base = import.meta.env.BASE_URL.endsWith('/')
   </head>
   <body>
     <div class="app-frame">
-    <a class="skip-link" href="#main">Skip to content</a>
+    <a class="skip-link" href="#main">{locale === 'ja' ? '本文へ移動' : 'Skip to content'}</a>
     <header class="site-header">
       <div class="site-header__inner shell">
-        <a class="brand" href={base} aria-label="ReelDeal home" aria-current={section === 'board' ? 'page' : undefined}>ReelDeal</a>
-        <nav class="site-nav" aria-label="Main navigation">
-          <a href={`${base}shop/`} aria-current={section === 'shop' ? 'page' : undefined}>Shop</a>
-          <a href={`${base}intake/`} aria-current={section === 'intake' ? 'page' : undefined}>Intake</a>
-          <a href={`${base}provenance/`} aria-current={section === 'provenance' ? 'page' : undefined}>Proof</a>
+        <a class="brand" href={home} aria-label={locale === 'ja' ? 'ReelDeal ホーム' : 'ReelDeal home'} aria-current={section === 'board' ? 'page' : undefined}>ReelDeal</a>
+        <nav class="site-nav" aria-label={locale === 'ja' ? 'メインナビゲーション' : 'Main navigation'}>
+          <a href={`${home}shop/`} aria-current={section === 'shop' ? 'page' : undefined}>{locale === 'ja' ? 'お店' : 'Shop'}</a>
+          <a href={`${base}intake/`} aria-current={section === 'intake' ? 'page' : undefined}>{locale === 'ja' ? '入荷 (EN)' : 'Intake'}</a>
+          <a href={`${base}provenance/`} aria-current={section === 'provenance' ? 'page' : undefined}>{locale === 'ja' ? '履歴 (EN)' : 'Proof'}</a>
         </nav>
       </div>
     </header>
     <main id="main"><slot /></main>
     <footer class="site-footer">
       <div class="site-footer__inner shell">
-        <p>Demo only · no real fish or payments</p>
+        <p>{locale === 'ja' ? 'デモ用 · 魚の販売・決済は行いません' : 'Demo only · no real fish or payments'}</p>
       </div>
     </footer>
     </div>

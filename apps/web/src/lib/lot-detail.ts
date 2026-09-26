@@ -32,6 +32,16 @@ if (root) {
     if (node) node.textContent = value;
   };
   const photo = root.querySelector<HTMLImageElement>('[data-lot-image] img, img[data-lot-image]');
+  const images = JSON.parse(root.dataset.fishImages ?? '{}') as Record<string, string>;
+  function showReference(species: string | null) {
+    const src = images[(species ?? '').toLowerCase()];
+    if (!src || !photo) return;
+    photo.closest('picture')?.querySelectorAll('source').forEach((source) => source.remove());
+    photo.removeAttribute('srcset');
+    photo.src = src;
+    photo.alt = `Reference illustration of ${species ?? 'fish'}`;
+    photo.closest<HTMLElement>('.market-detail__media')!.dataset.reference = 'true';
+  }
   const showUnavailable = (text: string) => {
     if (bidding) bidding.hidden = true;
     if (message) {
@@ -45,6 +55,7 @@ if (root) {
     if (bidding) bidding.hidden = true;
     const preview = previewLots.find((lot) => lot.id === lotId);
     if (!preview) return false;
+    showReference(preview.species);
     set('[data-lot-title]', preview.species);
     set('[data-lot-status]', 'Preview · synthetic');
     set('[data-lot-price]', `¥${preview.priceJpy.toLocaleString('ja-JP')}`);
@@ -56,7 +67,6 @@ if (root) {
     set('[data-signal-status]', 'Preview only');
     set('[data-signal-species]', 'Sample label');
     set('[data-signal-review]', 'No review record');
-    set('[data-signal-photo]', 'No photo');
     for (const field of ['species', 'weight', 'length']) {
       const marker = root?.querySelector<HTMLElement>(`[data-correction-${field}]`);
       if (marker) marker.hidden = true;
@@ -67,7 +77,7 @@ if (root) {
     }
     if (content) content.hidden = false;
     if (evidence) evidence.hidden = true;
-    if (message) message.textContent = 'This is an illustrative preview, not current market inventory.';
+    if (message) message.textContent = 'This is a preview lot, not current market inventory.';
     if (recovery) recovery.hidden = true;
     return true;
   }
@@ -93,14 +103,14 @@ if (root) {
     }));
     set('[data-lot-id]', lot.id);
     const hasPhoto = /^data:image\/(?:jpeg|png|webp|avif);base64,[a-z0-9+/=]+$/i.test(observation.image_ref);
+    set('[data-photo-source]', hasPhoto ? 'Submitted landing photo' : 'Reference illustration; no landing photo supplied');
+    if (!hasPhoto) showReference(facts.species_label);
     if (hasPhoto && photo) {
       photo.closest('picture')?.querySelectorAll('source').forEach((source) => source.remove());
       photo.removeAttribute('srcset');
       photo.src = observation.image_ref;
+      photo.closest<HTMLElement>('.market-detail__media')!.dataset.reference = 'false';
       photo.alt = `Landing photograph for ${facts.species_label ?? 'this lot'}`;
-      set('[data-photo-caption]', 'Landing photo submitted with this scan.');
-      const caption = root?.querySelector<HTMLElement>('[data-photo-caption]');
-      if (caption) caption.hidden = false;
     }
     if (evidenceAction) {
       evidenceAction.href = '#lot-evidence';
@@ -111,7 +121,6 @@ if (root) {
     set('[data-signal-review]', corrections.length > 0
       ? `${corrections.length} human correction${corrections.length === 1 ? '' : 's'}`
       : lot.status === 'pending_review' ? 'Review needed' : 'No corrections');
-    set('[data-signal-photo]', hasPhoto ? 'Landing photo' : 'No photo');
     const answer = decision.kind === 'choice' ? decision.choice ?? 'No answer'
       : decision.kind === 'score' ? `${Math.round((decision.score ?? 0) * 100)}% recorded score`
       : decision.noul_value ? 'Yes' : 'No';

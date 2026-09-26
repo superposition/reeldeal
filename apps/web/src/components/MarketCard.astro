@@ -4,34 +4,39 @@ import Badge from './ui/Badge.astro';
 import Button from './ui/Button.astro';
 import placeholder from '../assets/landing-placeholder.png';
 import type { PreviewLot } from '../data/preview-lots';
+import { fish, type Locale } from '../data/fish';
+import { marketCopy } from '../data/market-copy';
 
-const { lot, first = false, base, index = 0 } = Astro.props as { lot: PreviewLot; first?: boolean; base: string; index?: number };
+const { lot, first = false, base, index = 0, locale = 'en' } = Astro.props as { lot: PreviewLot; first?: boolean; base: string; index?: number; locale?: Locale };
 const tones = ['lime', 'pink', 'yellow', 'blue'];
+const species = fish.find((item) => item.slug === lot.species.toLowerCase());
+const image = species?.image ?? placeholder;
+const t = marketCopy[locale];
+const detailUrl = `${base}shop/lot/?id=${encodeURIComponent(lot.id)}`;
 ---
 
-<article class={`market-card market-card--${tones[index % tones.length]} market-card--preview`} aria-labelledby={`market-${lot.id}`}>
-  <div class="market-card__media">
+<article class={`market-card market-card--${tones[index % tones.length]} market-card--preview market-card--reference`} aria-labelledby={`market-${lot.id}`} data-species={lot.species.toLowerCase()}>
+  <a class="market-card__media" href={detailUrl} aria-label={`${t.view} ${locale === 'ja' && species ? species.ja : lot.species}`}>
     <Picture
-      src={placeholder}
-      formats={['avif', 'webp']}
+      src={image}
+      formats={image.format === 'svg' ? ['svg'] : ['avif', 'webp']}
       widths={[240, 480]}
-      sizes="148px"
+      sizes="(max-width: 350px) 128px, 160px"
       width={480}
-      height={360}
-      alt="Illustrated fish silhouette; no landing photograph"
+      height={Math.round(480 * image.height / image.width)}
+      alt={`${locale === 'ja' && species ? species.ja : species?.english ?? lot.species} · ${t.referenceImage}`}
       loading={first ? 'eager' : 'lazy'}
     />
-    <div class="market-card__image-copy">
-      <Badge label="Preview" tone="yellow" class="market-card__status" />
-      <div class="market-card__image-facts">
-        <h2 id={`market-${lot.id}`}>{lot.species}</h2>
-        <p><span>{lot.weightG.toLocaleString('ja-JP')} g</span><span class="market-card__fact-divider"> · </span><span>{lot.lengthMm} mm</span></p>
-        <small>Sample landing</small>
-      </div>
+  </a>
+  <div class="market-card__image-copy">
+    <Badge label={t.previewBadge} tone="yellow" class="market-card__status" />
+    <div class="market-card__image-facts">
+      <h2 id={`market-${lot.id}`}>{locale === 'ja' && species ? species.ja : lot.species}</h2>
+      <p><span>{lot.weightG.toLocaleString('ja-JP')} g</span><span class="market-card__fact-divider"> · </span><span>{lot.lengthMm} mm</span></p>
     </div>
   </div>
   <div class="market-card__foot">
     <strong>¥{lot.priceJpy.toLocaleString('ja-JP')}</strong>
-    <Button href={`${base}shop/lot/?id=${encodeURIComponent(lot.id)}`} variant="secondary" tone="ink" class="market-card__action">View</Button>
+    <Button href={detailUrl} variant="secondary" tone="ink" class="market-card__action">{t.view}</Button>
   </div>
 </article>

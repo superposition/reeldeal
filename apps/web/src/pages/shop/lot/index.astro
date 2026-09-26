@@ -18,7 +18,7 @@ const { initialDetail, initialState, initialMessage, initialProofOpen, initialAu
 };
 ---
 
-<BaseLayout title="Lot details" description="Check the landing facts and current status for a Kesennuma market lot." section="shop">
+<BaseLayout title="Lot details" description="Check the landing facts and current status for a market lot." section="shop">
   <LotDetailView detail={initialDetail} state={initialState} message={initialMessage} proofOpen={initialProofOpen} auditOpen={initialAuditOpen} apiOrigin={apiOrigin}>
     <div slot="offer" data-lot-bidding hidden>
       <BidPanel client:visible apiOrigin={apiOrigin} chainId={bidChainId} />
