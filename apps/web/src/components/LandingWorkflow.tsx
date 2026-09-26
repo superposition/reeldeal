@@ -98,6 +98,7 @@ export default function LandingWorkflow(props: { apiOrigin: string }) {
     const token = ++generation;
     setObservation(next); setDecision(null); setLot(null); setReview(null);
     setPendingDecision(null); setPendingLot(null); setBlocked(hadLot); setError('');
+    setBusy('');
     setMessage(hadLot
       ? 'Changed facts saved. This scan already has a lot; start a new landing before another check.'
       : 'Landing saved. Choose a check when ready.');
@@ -184,7 +185,7 @@ export default function LandingWorkflow(props: { apiOrigin: string }) {
       remember({ decisionId: body.typed_decision.id, pendingDecision: undefined }, current);
       setMessage(payload.confidence_source === 'policy_required_input'
         ? 'Required-facts hold recorded. A human review is needed before listing.'
-        : `${mode === 'laya' ? 'Local model' : 'Rule-based'} check recorded. Create a demo lot to run the server gate.`);
+        : `${mode === 'laya' ? 'Local model' : 'Landing'} check recorded. Create a demo lot to run the review gate.`);
     } catch (cause) {
       if (token !== generation) return;
       if (cause instanceof ApiFailure && cause.code === 'stale_observation') {
@@ -230,6 +231,7 @@ export default function LandingWorkflow(props: { apiOrigin: string }) {
   }
 
   function onReviewChange(next: ReviewSnapshot) {
+    if (lot()?.id !== next.lot.id) return;
     setReview(next);
     setLot((current) => current && current.id === next.lot.id
       ? { ...current, status: next.lot.status as Lot['status'], gate_reason: next.lot.gate_reason } : current);
@@ -239,13 +241,15 @@ export default function LandingWorkflow(props: { apiOrigin: string }) {
   async function publish() {
     const current = lot();
     if (!current || current.status !== 'approved' || busy()) return;
+    const token = generation;
     setBusy('publish'); setError(''); setMessage('Publishing demo listing…');
     try {
       await request(`/v1/lots/${encodeURIComponent(current.id)}/publish`, { method: 'POST' });
+      if (token !== generation || lot()?.id !== current.id) return;
       setLot({ ...current, status: 'listed' });
-      setMessage('Listed in the demo shop. No sale or payment was made.');
-    } catch (cause) { setError(errorWords(cause)); }
-    finally { setBusy(''); }
+      setMessage('Listing published in the demo shop.');
+    } catch (cause) { if (token === generation && lot()?.id === current.id) setError(errorWords(cause)); }
+    finally { if (token === generation && lot()?.id === current.id) setBusy(''); }
   }
 
   return <div class="landing-workflow">
@@ -261,8 +265,8 @@ export default function LandingWorkflow(props: { apiOrigin: string }) {
           <Show when={!decision() && !blocked()}>
             <div class="landing-workflow__actions">
               <Show when={pendingDecision()} fallback={<>
-                <button type="button" onClick={() => check('rules')} disabled={Boolean(busy()) || !api}>Check with rules</button>
-                <button type="button" class="landing-workflow__secondary" onClick={() => check('laya')} disabled={Boolean(busy()) || !api}>Check with Laya</button>
+                <button type="button" class="landing-workflow__primary" onClick={() => check('rules')} disabled={Boolean(busy()) || !api}>Check landing</button>
+                <details class="landing-workflow__check-options"><summary>Check options</summary><p>The local model is optional and downloads to this browser. Missing facts still go to review.</p><button type="button" class="landing-workflow__secondary" onClick={() => check('laya')} disabled={Boolean(busy()) || !api}>Check with Laya</button></details>
               </>}>
                 {(pending) => <button type="button" onClick={() => check(pending().mode)} disabled={Boolean(busy()) || !api}>Retry saved check</button>}
               </Show>
@@ -287,13 +291,22 @@ export default function LandingWorkflow(props: { apiOrigin: string }) {
           </Show>
           <Show when={lot()}>
             {(created) => <div class="landing-workflow__lot">
-              <strong>{created().status === 'pending_review' ? 'Review needed' : created().status === 'approved' ? 'Ready to publish' : 'Listed in demo shop'}</strong>
+              <strong>{created().status === 'pending_review' ? 'Review needed'
+                : created().status === 'approved' ? 'Ready to publish'
+                  : created().status === 'listed' ? 'Listed in demo shop'
+                    : created().status === 'reserved' ? 'Reserved'
+                      : created().status === 'sold' ? 'Sold'
+                        : created().status === 'withdrawn' ? 'Withdrawn' : 'Draft'}</strong>
               <p>{created().status === 'pending_review'
                 ? gateReasonWords[created().gate_reason ?? ''] ?? 'An operator must check the recorded facts.'
                 : created().status === 'approved' ? 'The server approved this lot. It is not public until you publish it.'
-                  : 'This lot is visible in the demo shop. No sale or payment happened.'}</p>
+                  : created().status === 'listed' ? 'Visible in the demo shop. A listing is not a sale.'
+                    : created().status === 'reserved' ? 'Reserved for a buyer. Open the lot for sale details.'
+                      : created().status === 'sold' ? 'Sale recorded. Open the lot for payment and proof details.'
+                        : created().status === 'withdrawn' ? 'This lot was withdrawn from the shop.'
+                          : 'This lot is not public.'}</p>
               <Show when={created().status === 'approved'}><button type="button" onClick={publish} disabled={Boolean(busy())}>Publish to shop</button></Show>
-              <Show when={created().status === 'listed'}><a href={`${base}shop/lot/?id=${encodeURIComponent(created().id)}`}>View lot</a></Show>
+              <Show when={['listed', 'reserved', 'sold', 'withdrawn'].includes(created().status)}><a href={`${base}shop/lot/?id=${encodeURIComponent(created().id)}`}>View lot</a></Show>
             </div>}
           </Show>
           <Show when={lot()?.status === 'pending_review' && !review()}><button type="button" class="landing-workflow__retry" onClick={() => { if (lot()) void loadReview(lot()!.id, generation); }} disabled={Boolean(busy())}>Load review form</button></Show>

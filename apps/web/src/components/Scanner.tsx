@@ -272,7 +272,7 @@ export default function Scanner(props: {
             <button type="submit" class="scanner__button" disabled={saving() || !imageRef() || !api}>
               {saving() ? 'Saving…' : 'Save landing'}
             </button>
-            <button type="button" class="scanner__button scanner__button--secondary" onClick={newLanding}>New landing</button>
+            <button type="button" class="scanner__button scanner__button--secondary" onClick={newLanding} disabled={saving()}>New landing</button>
           </div>
           <Show when={!api}><p class="scanner__error" role="status">The market connection is unavailable. Saving is off for now.</p></Show>
           <p class="scanner__status" role="status" aria-live="polite">{saveMessage()}</p>
