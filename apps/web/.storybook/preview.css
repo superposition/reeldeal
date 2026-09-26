@@ -10,3 +10,5 @@
 /* Astro's static story renderer leaves <Picture> at a dev-only /@fs URL. */
 .market-card__media { background: url('/story-assets/landing-placeholder.png') center / cover; }
 .market-card__media picture { visibility: hidden; }
+.market-detail__media { background: url('/story-assets/landing-placeholder.png') center / cover; }
+.market-detail__media picture { visibility: hidden; }
