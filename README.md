@@ -1,5 +1,14 @@
 # ReelDeal
 
+## Umi data model
+
+The [Umi data model](docs/umi-data-model.md) introduces the relief fund's shared
+types from atoms through molecules to observations, trigger evaluations, and a
+proposed API/smart-contract payout boundary. Its schemas live in
+`packages/domain/src/umi`; payout execution is still to be implemented.
+
+## Marketplace demo
+
 ReelDeal is an ETHGlobal Tokyo 2026 fish-market **demo**. A browser records a
 landing, a typed decision is stored with its inputs, the API sends incomplete
 or uncertain lots to review, and approved lots can be listed. The model is
@@ -146,10 +155,28 @@ one thread. [RD-13's runtime evidence](https://github.com/superposition/reeldeal
 records the exact run. A later fresh-tab check loaded and verified q4e8 in
 34.8 seconds on the one-thread fallback, then disabled networking: an uncached
 fetch failed while the already-loaded model produced a typed sample in
-3.079 seconds. This proves **warm-tab offline inference**, not a cold offline
-reload. That earlier four-thread/cache run has not been repeated against this
-revision; cold offline startup and fish-specific accuracy remain **unverified**.
-A model sample is not a fish grade or species classifier.
+3.079 seconds. On its own that proved **warm-tab offline inference**, not a
+cold reload; a cold-profile run on 26 September 2026 closed that gap and is
+described below.
+
+The cold-profile run repeated the whole sequence on a fresh Chrome profile
+against deployed main `c3546e7`, in four steps: the first load was a verified
+download of the pinned q4e8 weights (54.6 s, four WASM threads); the weights
+host was then blocked at the network layer, with a control fetch from the page
+failing to prove the cut was real; the page was reloaded into a fresh
+JavaScript context; and the reload served the same 291,127,040-byte artifact
+from Cache Storage under `reeldeal-laya-q4e8-de4960a6…b055b` in 834 ms and
+answered a typed sample in 908 ms with **zero requests to the weights host**.
+That is **cached cold reload of the model**, which is what makes the
+venue-wifi failure mode survivable. Reproduce it with
+`RD_CDP_PORT=<port> RD_MODEL_URL=<url> node scripts/verify-model-browser.mjs --offline-reload`.
+
+Two limits stay open. The app's own HTML, JavaScript and CSS are not
+pre-cached by a service worker — on that reload they came from Chrome's
+ordinary HTTP cache — so a first-ever offline visit is still unproven and the
+deterministic stub remains the guaranteed path when the network is gone.
+Fish-specific accuracy also remains **unverified**: a model sample is not a
+fish grade or species classifier.
 
 ## Remaining demo gates and attribution
 
