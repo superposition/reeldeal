@@ -17,7 +17,7 @@ export const previewLots: PreviewLot[] = [
     weightG: 1480,
     priceJpy: 2800,
     status: 'Preview lot',
-    note: 'Operator-confirmed label · decision pending',
+    note: 'Species label confirmed · review pending',
   },
   {
     id: 'RD-LOT-002',
@@ -26,7 +26,7 @@ export const previewLots: PreviewLot[] = [
     weightG: 265,
     priceJpy: 760,
     status: 'Preview lot',
-    note: 'Operator-confirmed label · decision pending',
+    note: 'Species label confirmed · review pending',
   },
   {
     id: 'RD-LOT-003',
@@ -35,6 +35,6 @@ export const previewLots: PreviewLot[] = [
     weightG: 690,
     priceJpy: 1240,
     status: 'Preview lot',
-    note: 'Operator-confirmed label · decision pending',
+    note: 'Species label confirmed · review pending',
   },
 ];
