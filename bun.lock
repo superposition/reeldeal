@@ -11,6 +11,10 @@
     },
     "apps/api": {
       "name": "@reeldeal/api",
+      "dependencies": {
+        "@reeldeal/decision": "workspace:*",
+        "@reeldeal/domain": "workspace:*",
+      },
     },
     "apps/decision": {
       "name": "@reeldeal/decision-app",

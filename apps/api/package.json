@@ -2,6 +2,10 @@
   "name": "@reeldeal/api",
   "private": true,
   "type": "module",
+  "dependencies": {
+    "@reeldeal/decision": "workspace:*",
+    "@reeldeal/domain": "workspace:*"
+  },
   "scripts": {
     "dev": "bun --watch src/index.ts",
     "start": "bun src/index.ts"
