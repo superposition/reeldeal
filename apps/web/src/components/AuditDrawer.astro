@@ -21,8 +21,9 @@ const apiBase = import.meta.env.PUBLIC_API_BASE_URL ?? '';
 </details>
 
 <script>
+  import { auditActionLabel } from '../lib/audit-label';
   type AuditEvent = {
-    actor_kind: string; actor_id: string; from_status: string | null;
+    entity_type: string; actor_kind: string; actor_id: string; from_status: string | null;
     to_status: string | null; at: number; payload: unknown;
   };
 
@@ -59,9 +60,7 @@ const apiBase = import.meta.env.PUBLIC_API_BASE_URL ?? '';
       for (const event of [...events].reverse()) {
         const item = document.createElement('li');
         const action = document.createElement('strong');
-        action.textContent = event.from_status && event.to_status
-          ? `${event.from_status} → ${event.to_status}`
-          : event.to_status ?? event.from_status ?? 'Recorded action';
+        action.textContent = auditActionLabel(event);
         const actor = document.createElement('span');
         actor.textContent = `${event.actor_kind} · ${event.actor_id}`;
         const time = document.createElement('time');

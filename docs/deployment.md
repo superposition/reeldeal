@@ -1,6 +1,6 @@
 # Demo deployment record
 
-Verified 26 September 2026 against Pages build `675e03d` and the separate
+Verified 26 September 2026 against Pages build `20a87d4` and the separate
 `reeldeal-hackathon` Railway project. This records a demo deployment, not a
 production security or chain-attestation claim.
 
@@ -8,7 +8,7 @@ production security or chain-attestation claim.
 
 | Component | Runtime and public entry | What it owns |
 | --- | --- | --- |
-| Astro UI | [GitHub Pages](https://superposition.github.io/reeldeal/) via [Pages workflow](https://github.com/superposition/reeldeal/actions/runs/36215974794) | Static HTML/assets, browser camera and Laya worker. Its only app-specific build setting is the public `PUBLIC_API_ORIGIN` (also mapped to `PUBLIC_API_BASE_URL`). |
+| Astro UI | [GitHub Pages](https://superposition.github.io/reeldeal/) via [Pages workflow](https://github.com/superposition/reeldeal/actions/runs/36217941420) | Static HTML/assets, browser camera and Laya worker. `PUBLIC_API_ORIGIN` (also mapped to `PUBLIC_API_BASE_URL`) is public. Optional `PUBLIC_CHAIN_ID` is also public and must match the API bid domain. No operator token belongs here. |
 | Bun API | [Railway `api`](https://api-production-04b0.up.railway.app/v1/health), project `105fe9e3-033c-4ecc-a9f4-37120fd62326`, service `ac36588a-5ebd-4c0d-8c71-7444aa570bbd`, production environment `ee8f43d3-e0eb-4c3a-b474-a52318305ac7` | `/v1` validation, typed-decision persistence, review gate, market state, audit, and SQLite. No model weights or inference run here. |
 | SQLite | Railway volume mounted at `/data`; `DB_PATH=/data/reeldeal.sqlite` | Shared demo business and audit records. One `us-west2` replica uses this volume. |
 
@@ -25,7 +25,7 @@ or public contract address is claimed here.
 The [RD-29 read-only evidence](https://github.com/superposition/reeldeal/issues/35#issuecomment-5842946688)
 records the deployment and public responses without changing shared data.
 
-- Railway deployment `2127ee8c-a125-4cfa-be29-9b48349a29c3` for `675e03d`
+- Railway deployment `bb62ee33-937c-490a-b094-37841dd28a89` for `20a87d4`
   reached terminal `SUCCESS`. Its public domain is
   `api-production-04b0.up.railway.app`. `GET /v1/health` returned
   HTTP 200 with `{ "ok": true, "db": "up", "backends": { "decision": "stub" } }`.
@@ -43,14 +43,26 @@ records the deployment and public responses without changing shared data.
   two browser sessions. Do not run the local write-heavy smoke script against
   this shared API.
 
-The Pages workflow for `675e03d` finished successfully, and the deployed
+The Pages workflow for `20a87d4` finished successfully, and the deployed
 shop markup includes the Railway API origin. A full browser scan → reload →
 read across two sessions, camera proof, authenticated seller write boundary,
 and real chain anchor remain **pending**. The provenance panel must not show
 `confirmed` without a verified receipt. Ordinary demo write routes are
 publicly reachable by direct HTTP clients; the operator anchor mutation
-has a server-side token gate. The app must not be presented as production
+has a server-side token gate. Accept/pay additionally require the server-only
+`REELDEAL_SELLER_TOKEN`. At this revision the public service has no seller token
+configured: an unauthenticated readiness probe returned HTTP 503
+`seller_actions_disabled` before any write. That is intentional fail-closed
+behavior, not proof of a live seller session. The full accept/pay flow was
+verified using `bun run smoke:local` against a disposable local API, never by
+settling shared public listings. The app must not be presented as production
 safe or as a seller-authenticated marketplace.
+
+The public intake page was inspected at 320px with no horizontal overflow or
+console errors. Its camera remained off. The local synthetic browser playtest
+proved saved-observation → review → two attributed scale corrections → explicit
+publication and reload recovery at 320/390px; it is not physical-camera or
+two-person wallet evidence.
 
 ## Recovery
 

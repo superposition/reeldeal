@@ -1,4 +1,5 @@
 import { previewLots } from '../data/preview-lots';
+import { auditActionLabel } from './audit-label';
 
 export type Detail = {
   listing?: { id: string; status: string; price_jpy: number } | null;
@@ -11,7 +12,7 @@ export type Detail = {
     model: { id: string; version: string; sha256?: string | null };
   };
   corrections: Array<{ field: string; model_value: unknown; human_value: unknown; actor_id: string }>;
-  audit: Array<{ entity_type: string; actor_kind: string; actor_id: string; from_status: string | null; to_status: string | null; at: string }>;
+  audit: Array<{ entity_type: string; actor_kind: string; actor_id: string; from_status: string | null; to_status: string | null; at: string; payload?: unknown }>;
   gate: { route: string; reason: string };
 };
 
@@ -69,6 +70,10 @@ if (root) {
     set('[data-signal-species]', 'Sample label');
     set('[data-signal-review]', 'No review record');
     set('[data-signal-photo]', 'Reference image');
+    for (const field of ['species', 'weight', 'length']) {
+      const marker = root?.querySelector<HTMLElement>(`[data-correction-${field}]`);
+      if (marker) marker.hidden = true;
+    }
     if (evidenceAction) {
       evidenceAction.href = new URL('../', location.href).pathname;
       evidenceAction.textContent = 'Back to lots';
@@ -91,6 +96,11 @@ if (root) {
     set('[data-lot-species]', facts.species_label ?? 'Not confirmed');
     set('[data-lot-weight]', facts.weight_g === null ? 'Not recorded' : `${facts.weight_g.toLocaleString('ja-JP')} g`);
     set('[data-lot-length]', facts.length_mm === null ? 'Not recorded' : `${facts.length_mm} mm`);
+    const correctedFields = new Set(corrections.map((correction) => correction.field));
+    for (const [field, source] of [['species', 'species_label'], ['weight', 'weight_g'], ['length', 'length_mm']]) {
+      const marker = root?.querySelector<HTMLElement>(`[data-correction-${field}]`);
+      if (marker) marker.hidden = !correctedFields.has(source);
+    }
     set('[data-lot-landed]', new Date(observation.captured_at).toLocaleString('ja-JP', {
       month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit',
     }));
@@ -135,7 +145,7 @@ if (root) {
       for (const event of detail.audit) {
         const item = document.createElement('li');
         const action = document.createElement('strong');
-        action.textContent = `${event.entity_type}: ${event.from_status ?? 'new'} → ${event.to_status ?? 'recorded'}`;
+        action.textContent = auditActionLabel(event);
         const meta = document.createElement('span');
         meta.textContent = `${event.actor_kind} · ${event.actor_id} · ${new Date(event.at).toLocaleString('ja-JP')}`;
         item.append(action, meta);

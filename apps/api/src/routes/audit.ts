@@ -1,20 +1,7 @@
 import type { Database } from 'bun:sqlite';
 import { db } from '../db';
+import { serializePublicAudit, type AuditRow } from './public-audit';
 import { json, options } from './stub';
-
-type AuditRow = {
-  id: string;
-  entity_type: string;
-  entity_id: string;
-  org_id: string | null;
-  actor_kind: 'user' | 'device' | 'wallet' | 'system';
-  actor_id: string;
-  from_status: string | null;
-  to_status: string | null;
-  request_id: string;
-  payload_json: string | null;
-  at: number;
-};
 
 const ENTITY = /^[A-Za-z][A-Za-z0-9]{0,63}$/;
 
@@ -45,11 +32,7 @@ export function makeAuditRoutes(database: Database) {
             ORDER BY at DESC, rowid DESC LIMIT ?
           `).all(entity, entity, id, id, limit) as AuditRow[];
           return json({
-            events: rows.map(({ payload_json, ...row }) => ({
-              ...row,
-              payload: payload_json === null ? null : JSON.parse(payload_json) as unknown,
-              at_iso: new Date(row.at).toISOString(),
-            })),
+            events: rows.map((row) => ({ ...serializePublicAudit(row), at_iso: new Date(row.at).toISOString() })),
           });
         } catch {
           return json({ error: 'audit_unavailable' }, 503);
