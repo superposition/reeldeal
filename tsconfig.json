@@ -9,6 +9,8 @@
     "types": ["bun", "node"],
     "resolveJsonModule": true,
     "allowImportingTsExtensions": true,
+    "jsx": "preserve",
+    "jsxImportSource": "solid-js",
     "noEmit": true,
     "paths": {
       "@reeldeal/domain": ["./packages/domain/src/index.ts"],
