@@ -5,7 +5,7 @@ import '../styles/global.css';
 const { title, description, section = 'board' } = Astro.props as {
   title: string;
   description: string;
-  section?: 'board' | 'shop';
+  section?: 'board' | 'shop' | 'intake';
 };
 const base = import.meta.env.BASE_URL.endsWith('/')
   ? import.meta.env.BASE_URL
