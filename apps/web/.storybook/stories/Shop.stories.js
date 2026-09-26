@@ -1,4 +1,4 @@
-import Shop from './index.astro';
+import Shop from '../../src/pages/shop/index.astro';
 
 export default {
   title: 'ReelDeal/03 Organisms/Shop',
