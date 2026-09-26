@@ -14,6 +14,7 @@ type Progress = {
   observationId: string;
   decisionId?: string;
   lotId?: string;
+  blockedLotId?: string;
   pendingDecision?: { mode: CheckMode; payload: TypedDecisionInput };
   pendingLot?: LotRequest;
 };
@@ -91,21 +92,23 @@ export default function LandingWorkflow(props: { apiOrigin: string }) {
     if (observation()?.id === next.id) return;
     const old = observation();
     const saved = readProgress(next.scan_id);
-    const hadLot = (old?.scan_id === next.scan_id && old.id !== next.id && lot() !== null)
-      || Boolean(saved?.lotId && saved.observationId !== next.id);
+    const blockedLotId = old?.scan_id === next.scan_id && old.id !== next.id ? lot()?.id : undefined;
+    const priorLotId = saved?.observationId === next.id ? saved.blockedLotId : saved?.lotId ?? saved?.blockedLotId;
+    const hadLot = Boolean(blockedLotId ?? priorLotId);
     const token = ++generation;
     setObservation(next); setDecision(null); setLot(null); setReview(null);
     setPendingDecision(null); setPendingLot(null); setBlocked(hadLot); setError('');
     setMessage(hadLot
       ? 'Changed facts saved. This scan already has a lot; start a new landing before another check.'
       : 'Landing saved. Choose a check when ready.');
-    if (saved && saved.observationId !== next.id) {
-      writeProgress(next.scan_id, { observationId: next.id });
-      setMessage(hadLot
+    if (saved?.observationId !== next.id) {
+      writeProgress(next.scan_id, { observationId: next.id, ...(hadLot ? { blockedLotId: blockedLotId ?? priorLotId } : {}) });
+      if (saved || hadLot) setMessage(hadLot
         ? 'Changed facts saved. Start a new landing; the earlier lot stays in its record.'
         : 'Facts changed. The earlier check is no longer current; run a new check.');
       return;
     }
+    if (hadLot) return;
     if (!saved || !api) return;
     setPendingDecision(saved.pendingDecision ?? null);
     setPendingLot(saved.pendingLot ?? null);
