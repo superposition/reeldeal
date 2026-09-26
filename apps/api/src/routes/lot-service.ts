@@ -3,6 +3,7 @@ import {
   GATE, JpySchema, LotSchema, ObservationInputSchema, ObservationSchema,
   TypedDecisionInputSchema, TypedDecisionSchema, gate, fishScanMachine, lotMachine,
 } from '@reeldeal/domain';
+import { serializePublicAudit, type AuditRow } from './public-audit';
 import { json } from './stub';
 
 type ScanRow = { id: string; org_id: string; user_id: string | null; status: string };
@@ -174,7 +175,7 @@ export function getLot(database: Database, lotId: string): Response {
     ORDER BY at,rowid`).all(
       row.id, row.scan_id, observation.id, row.decision_id, row.id,
       listing?.id ?? null, listing?.id ?? null, listing?.id ?? null, listing?.id ?? null,
-    ) as Array<Record<string, unknown>>;
+    ) as AuditRow[];
   const original = observationValue(observation);
   const effective = effectiveObservation(original, corrections.map((item) => ({
     field: String(item.field), human_value: String(item.human_value), actor_id: String(item.actor_id),
@@ -202,9 +203,7 @@ export function getLot(database: Database, lotId: string): Response {
       reason: item.reason, actor_id: item.actor_id, human_supplied: true,
       created_at: timestamp(Number(item.created_at)),
     })),
-    audit: events.map(({ payload_json, at, ...event }) => ({
-      ...event, payload: payload_json === null ? null : JSON.parse(String(payload_json)), at: timestamp(Number(at)),
-    })),
+    audit: events.map((event) => ({ ...serializePublicAudit(event), at: timestamp(event.at) })),
     gate: gate(typed, original),
   });
 }
