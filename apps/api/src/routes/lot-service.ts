@@ -154,6 +154,7 @@ export async function postLot(database: Database, request: Request): Promise<Res
 export function getLot(database: Database, lotId: string): Response {
   const row = database.query('SELECT * FROM lots WHERE id = ?').get(lotId) as LotRow | null;
   if (!row) return json({ error: 'lot_not_found' }, 404);
+  const listing = database.query('SELECT * FROM listings WHERE lot_id = ?').get(lotId) as ListingRow | null;
   const observation = database.query(`SELECT o.* FROM observations o
     JOIN decisions d ON d.observation_id = o.id WHERE d.id = ?`).get(row.decision_id) as FactRow;
   const decision = database.query('SELECT * FROM decisions WHERE id = ?').get(row.decision_id) as DecisionRow;
@@ -173,6 +174,7 @@ export function getLot(database: Database, lotId: string): Response {
   const typed = decisionValue(decision);
   return json({
     lot: lotWire(row),
+    listing: listing ? listingWire(listing) : null,
     effective_facts: {
       species_label: effective.species_label, species_confirmed_by: effective.species_confirmed_by,
       length_mm: effective.length_mm, weight_g: effective.weight_g,

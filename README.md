@@ -71,6 +71,12 @@ serves them**. Stop and rerun it after source changes; Controls cannot mutate
 Astro story args after the static build. This is a component workshop, not
 proof of API-backed shop behavior.
 
+The seed also provisions `demo-intake-operator` for reviewing new landings;
+`demo-operator` belongs only to the separate synthetic board fixtures. These
+IDs provide demo attribution, **not sign-in or authentication**. Review still
+requires explicit attestation and complete, consistent facts. Re-running the
+seed does not reactivate, move, or overwrite an existing reviewer.
+
 ## System path
 
 ```mermaid

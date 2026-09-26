@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import { expect, test } from 'bun:test';
 import { gate, ObservationSchema, TypedDecisionInputSchema } from '../packages/domain/src/index';
 import { demoFixtures, previewDemoLots, seedDemoData } from './seed';
+import { seedIntakeReviewer } from '../apps/api/src/db/demo-market';
 
 function freshDb(): Database {
   const db = new Database(':memory:', { strict: true });
@@ -13,6 +14,25 @@ function freshDb(): Database {
 
 const count = (db: Database, table: string): number =>
   Number((db.query(`SELECT count(*) AS count FROM ${table}`).get() as { count: number }).count);
+
+test('intake reviewer seed preserves the existing organization and never reactivates or reassigns a user', () => {
+  const db = freshDb();
+  try {
+    db.query('INSERT INTO orgs (id,slug,name,status,created_at,updated_at) VALUES (?,?,?,?,?,?)')
+      .run('existing-intake', 'kessenuma', 'Existing intake', 'active', 1, 1);
+    seedIntakeReviewer(db);
+    expect(db.query('SELECT org_id,role,status FROM users WHERE id = ?').get('demo-intake-operator'))
+      .toEqual({ org_id: 'existing-intake', role: 'operator', status: 'active' });
+    db.query('UPDATE users SET status = ? WHERE id = ?').run('inactive', 'demo-intake-operator');
+    seedIntakeReviewer(db);
+    expect(db.query('SELECT status FROM users WHERE id = ?').get('demo-intake-operator')).toEqual({ status: 'inactive' });
+    db.query('INSERT INTO orgs (id,slug,name,status,created_at,updated_at) VALUES (?,?,?,?,?,?)')
+      .run('unrelated', 'unrelated', 'Unrelated', 'active', 1, 1);
+    db.query('UPDATE users SET org_id = ? WHERE id = ?').run('unrelated', 'demo-intake-operator');
+    expect(() => seedIntakeReviewer(db)).toThrow('refusing to reassign');
+    expect(db.query('SELECT org_id FROM users WHERE id = ?').get('demo-intake-operator')).toEqual({ org_id: 'unrelated' });
+  } finally { db.close(); }
+});
 
 test('seeds six exact Kesennuma fixtures with two lots in each demo status', async () => {
   const db = freshDb();
