@@ -1,4 +1,4 @@
-import LotDetail from '../../src/pages/shop/lot/index.astro';
+import LotDetail from './LotDetailShowcase.astro';
 
 // Mirrors the API shape of RD-25's seeded sanma lot. It is synthetic demo data:
 // the illustration is not a landing photo and there is no sale or chain receipt.
