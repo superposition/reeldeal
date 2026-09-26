@@ -1,5 +1,6 @@
 import { createSignal, onCleanup, onMount, Show } from 'solid-js';
 import type { Observation } from '@reeldeal/domain';
+import { clearScannerDraft, readScannerDraft, writeScannerDraft, type ScannerDraft } from './scanner-draft';
 import './Scanner.css';
 
 type SaveResponse = {
@@ -33,13 +34,83 @@ export default function Scanner(props: {
   const [saveMessage, setSaveMessage] = createSignal('');
   const [lastSaved, setLastSaved] = createSignal<Observation | null>(null);
   const [lastSavedMessage, setLastSavedMessage] = createSignal('');
+  const [draftStatus, setDraftStatus] = createSignal<'none' | 'saved' | 'restored' | 'too_large' | 'unavailable'>('none');
   const api = props.apiOrigin.replace(/\/$/, '');
+
+  function storage(): Storage | null {
+    try { return localStorage; } catch { return null; }
+  }
+
+  function getLocal(key: string): string | null {
+    try { return storage()?.getItem(key) ?? null; } catch { return null; }
+  }
+
+  function setLocal(key: string, value: string): void {
+    try { storage()?.setItem(key, value); } catch { /* Saving still works in this session. */ }
+  }
+
+  function removeLocal(key: string): void {
+    try { storage()?.removeItem(key); } catch { /* The draft status explains storage failure. */ }
+  }
+
+  function persistDraft(patch: Partial<ScannerDraft> = {}): void {
+    const photo = imageRef();
+    const time = capturedAt();
+    const id = scanId();
+    if (!photo || !time || !id) return;
+    const result = writeScannerDraft(storage(), {
+      version: 1,
+      scanId: id,
+      capturedAt: time,
+      imageRef: photo,
+      lengthMm: lengthMm(),
+      weightG: weightG(),
+      speciesLabel: speciesLabel(),
+      operatorId: operatorId(),
+      ...patch,
+    });
+    setDraftStatus(result);
+  }
+
+  function updateFact(field: 'lengthMm' | 'weightG' | 'speciesLabel' | 'operatorId', value: string): void {
+    if (field === 'lengthMm') setLengthMm(value);
+    else if (field === 'weightG') setWeightG(value);
+    else if (field === 'speciesLabel') setSpeciesLabel(value);
+    else setOperatorId(value);
+    if (imageRef()) {
+      setLocal(ACTIVE_SCAN_KEY, scanId()!);
+      persistDraft({ [field]: value });
+    }
+  }
+
+  function draftNote(): string {
+    if (draftStatus() === 'restored') return 'Local draft restored on this device. Save to confirm these facts with the market.';
+    if (draftStatus() === 'saved') return 'Local draft on this device. Save to confirm it with the market; start a new landing to clear it.';
+    if (draftStatus() === 'too_large') return 'Photo too large for a local draft. Keep this page open until you save; reloading will lose it.';
+    return 'Local draft unavailable in this browser. Keep this page open until you save; reloading may lose these changes or show older local facts.';
+  }
 
   onMount(() => {
     const restoreToken = restoreGeneration;
-    const activeId = localStorage.getItem(ACTIVE_SCAN_KEY);
+    const localDraft = readScannerDraft(storage());
+    if (localDraft.state === 'restored' && localDraft.draft) {
+      const draft = localDraft.draft;
+      setScanId(draft.scanId);
+      setCapturedAt(draft.capturedAt);
+      setImageRef(draft.imageRef);
+      setLengthMm(draft.lengthMm);
+      setWeightG(draft.weightG);
+      setSpeciesLabel(draft.speciesLabel);
+      setOperatorId(draft.operatorId);
+      setCameraMessage('Photo restored from this device. Start the camera only if you want to retake it.');
+      setDraftStatus('restored');
+      setSaveMessage('Local draft restored. Check the facts, then save to confirm or start a new landing.');
+      return;
+    }
+    if (localDraft.state === 'invalid') setLastSavedMessage('An unreadable local draft was cleared. Take a new photo to begin.');
+    const activeId = getLocal(ACTIVE_SCAN_KEY);
     if (activeId) setScanId(activeId);
-    const previousId = activeId ?? localStorage.getItem(LAST_SCAN_KEY);
+    const previousId = activeId ?? getLocal(LAST_SCAN_KEY);
     if (!previousId) return;
     if (!api) {
       setLastSavedMessage('A previous landing is stored on this device, but the market is not connected to check it.');
@@ -86,6 +157,7 @@ export default function Scanner(props: {
 
   function takePhoto() {
     if (camera() !== 'ready' || video.videoWidth === 0) return;
+    restoreGeneration++;
     const canvas = document.createElement('canvas');
     const ratio = video.videoHeight / video.videoWidth;
     canvas.width = Math.min(video.videoWidth, 960);
@@ -96,11 +168,14 @@ export default function Scanner(props: {
       return;
     }
     context.drawImage(video, 0, 0, canvas.width, canvas.height);
-    setImageRef(canvas.toDataURL('image/jpeg', 0.8));
-    setCapturedAt(new Date().toISOString());
+    const photo = canvas.toDataURL('image/jpeg', 0.8);
+    const time = new Date().toISOString();
     const currentId = scanId() ?? crypto.randomUUID();
+    setImageRef(photo);
+    setCapturedAt(time);
     setScanId(currentId);
-    localStorage.setItem(ACTIVE_SCAN_KEY, currentId);
+    setLocal(ACTIVE_SCAN_KEY, currentId);
+    persistDraft({ imageRef: photo, capturedAt: time, scanId: currentId });
     setSaveMessage('Photo captured. Check the facts before saving.');
   }
 
@@ -172,11 +247,13 @@ export default function Scanner(props: {
         }
         throw new Error(response.status === 400 ? 'Check the marked fields and try again.' : `Saving failed (${response.status}). Try again.`);
       }
-      localStorage.setItem(LAST_SCAN_KEY, body.observation.scan_id);
-      localStorage.removeItem(ACTIVE_SCAN_KEY);
+      const draftCleared = clearScannerDraft(storage());
+      setDraftStatus('none');
+      setLocal(LAST_SCAN_KEY, body.observation.scan_id);
+      removeLocal(ACTIVE_SCAN_KEY);
       setLastSaved(body.observation);
       props.onSaved?.(body.observation);
-      setLastSavedMessage('');
+      setLastSavedMessage(draftCleared ? '' : 'Saved, but this browser could not clear its local draft. Clear site storage before using this device again.');
       setSaveMessage(body.replayed
         ? 'Already saved. No duplicate landing was created.'
         : body.replaced
@@ -195,8 +272,9 @@ export default function Scanner(props: {
   function newLanding() {
     restoreGeneration++;
     props.onNewLanding?.();
-    localStorage.removeItem(ACTIVE_SCAN_KEY);
-    localStorage.removeItem(LAST_SCAN_KEY);
+    const draftCleared = clearScannerDraft(storage());
+    removeLocal(ACTIVE_SCAN_KEY);
+    removeLocal(LAST_SCAN_KEY);
     setImageRef(null);
     setCapturedAt(null);
     setScanId(null);
@@ -206,7 +284,8 @@ export default function Scanner(props: {
     setOperatorId('');
     setErrors({});
     setLastSaved(null);
-    setLastSavedMessage('');
+    setLastSavedMessage(draftCleared ? '' : 'This browser could not clear its local draft. Clear site storage before reloading.');
+    setDraftStatus('none');
     setSaveMessage('Ready for a new landing. Take a photo to begin.');
   }
 
@@ -230,14 +309,15 @@ export default function Scanner(props: {
           </div>
           <p class="scanner__camera-message" role={camera() === 'unavailable' ? 'alert' : 'status'}>{cameraMessage()}</p>
           <div class="scanner__actions">
-            <button type="button" class="scanner__button scanner__button--secondary" onClick={startCamera} disabled={camera() === 'starting'}>
+            <button type="button" class="scanner__button scanner__button--secondary" onClick={startCamera} disabled={camera() === 'starting' || saving()}>
               {camera() === 'ready' ? 'Restart camera' : 'Start camera'}
             </button>
-            <button type="button" class="scanner__button" onClick={takePhoto} disabled={camera() !== 'ready'}>
+            <button type="button" class="scanner__button" onClick={takePhoto} disabled={camera() !== 'ready' || saving()}>
               {imageRef() ? 'Retake photo' : 'Take photo'}
             </button>
           </div>
           <p class="scanner__camera-note">A photo is needed to save.</p>
+          <Show when={imageRef() && draftStatus() !== 'none'}><p class="scanner__camera-note" role="status">{draftNote()}</p></Show>
         </div>
 
         <form class="scanner__form" onSubmit={save} novalidate>
@@ -247,22 +327,22 @@ export default function Scanner(props: {
             <div class="scanner__fields">
               <div class="scanner__field">
                 <label for="length-mm">Length <span>(mm)</span></label>
-                <input id="length-mm" type="number" inputmode="decimal" min="0" max="2000" step="any" value={lengthMm()} onInput={(event) => setLengthMm(event.currentTarget.value)} aria-invalid={Boolean(errors().length_mm)} aria-describedby="length-error" />
+                <input id="length-mm" type="number" inputmode="decimal" min="0" max="2000" step="any" value={lengthMm()} onInput={(event) => updateFact('lengthMm', event.currentTarget.value)} disabled={saving()} aria-invalid={Boolean(errors().length_mm)} aria-describedby="length-error" />
                 <p id="length-error" class="scanner__error" role="alert">{errors().length_mm ?? ''}</p>
               </div>
               <div class="scanner__field">
                 <label for="weight-g">Weight <span>(g)</span></label>
-                <input id="weight-g" type="number" inputmode="decimal" min="0" max="200000" step="any" value={weightG()} onInput={(event) => setWeightG(event.currentTarget.value)} aria-invalid={Boolean(errors().weight_g)} aria-describedby="weight-error" />
+                <input id="weight-g" type="number" inputmode="decimal" min="0" max="200000" step="any" value={weightG()} onInput={(event) => updateFact('weightG', event.currentTarget.value)} disabled={saving()} aria-invalid={Boolean(errors().weight_g)} aria-describedby="weight-error" />
                 <p id="weight-error" class="scanner__error" role="alert">{errors().weight_g ?? ''}</p>
               </div>
               <div class="scanner__field scanner__field--wide">
                 <label for="species-label">Fish species</label>
-                <input id="species-label" type="text" autocomplete="off" value={speciesLabel()} onInput={(event) => setSpeciesLabel(event.currentTarget.value)} aria-invalid={Boolean(errors().species_label)} aria-describedby="species-error" />
+                <input id="species-label" type="text" autocomplete="off" value={speciesLabel()} onInput={(event) => updateFact('speciesLabel', event.currentTarget.value)} disabled={saving()} aria-invalid={Boolean(errors().species_label)} aria-describedby="species-error" />
                 <p id="species-error" class="scanner__error" role="alert">{errors().species_label ?? ''}</p>
               </div>
               <div class="scanner__field scanner__field--wide">
                 <label for="operator-id">Checked by</label>
-                <input id="operator-id" type="text" autocomplete="off" value={operatorId()} onInput={(event) => setOperatorId(event.currentTarget.value)} aria-describedby="operator-help" />
+                <input id="operator-id" type="text" autocomplete="off" value={operatorId()} onInput={(event) => updateFact('operatorId', event.currentTarget.value)} disabled={saving()} aria-describedby="operator-help" />
                 <p id="operator-help" class="scanner__hint">Name or initials of the person who checked the species. Demo only.</p>
               </div>
             </div>
