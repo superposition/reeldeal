@@ -1,0 +1,30 @@
+{
+  "grade": {
+    "type": "choice",
+    "instructions": "Choose the recorded size bracket from the operator's measured weight. This is an advisory record category, not a fish species or quality judgment.",
+    "criteria": {
+      "small": "Measured weight is below 1000 grams.",
+      "medium": "Measured weight is from 1000 to below 3000 grams.",
+      "large": "Measured weight is 3000 grams or more."
+    }
+  },
+  "quality": {
+    "type": "score",
+    "instructions": "Score the recorded handling evidence, not intrinsic fish quality. Use the measured ice temperature and completeness of the landing record.",
+    "criteria": [
+      "Required measurements are missing or contradictory",
+      "Record is complete but temperature evidence needs urgent operator review",
+      "Record is complete but temperature evidence is limited",
+      "Record is complete with reasonable temperature evidence",
+      "Record is complete with strong temperature evidence"
+    ]
+  },
+  "price_ok": {
+    "type": "noul",
+    "instructions": "Are the required landing facts complete and consistent enough for an operator to enter a demo asking price? This is not a price recommendation or real-market valuation.",
+    "criteria": {
+      "false": "A required fact is missing or contradictory; the operator must review it.",
+      "true": "The required facts are complete and consistent; the operator may enter a demo price."
+    }
+  }
+}
