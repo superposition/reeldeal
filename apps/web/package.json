@@ -1,0 +1,17 @@
+{
+  "name": "@reeldeal/web",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "check": "astro check"
+  },
+  "dependencies": {
+    "astro": "^7.3.5",
+    "@astrojs/solid-js": "^7.0.2",
+    "cookie": "^2.0.1",
+    "solid-js": "^1.9.15"
+  }
+}

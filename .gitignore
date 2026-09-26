@@ -39,6 +39,7 @@ build/Release
 
 # Dependency directories
 node_modules/
+.astro/
 jspm_packages/
 
 # Snowpack dependency directory (https://snowpack.dev/)
@@ -144,3 +145,11 @@ vite.config.ts.timestamp-*
 
 # Agent planning artifacts (local only — repo is public)
 .hermes/
+
+# ReelDeal local data and Foundry outputs
+*.sqlite
+*.sqlite-*
+contracts/cache/
+contracts/lib/
+contracts/out/
+contracts/broadcast/
